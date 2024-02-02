@@ -7,6 +7,8 @@
 cmake_minimum_required(VERSION 3.14...3.28)
 project(G4VG VERSION 0.1.0 LANGUAGES CXX)
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
+
 #----------------------------------------------------------------------------#
 # Utilities
 
@@ -43,6 +45,15 @@ if(G4VG_BUILD_TESTS)
   if(NOT GTest_FOUND)
     find_package(GTest 1.10 REQUIRED)
   endif()
+  if(NOT VecGeom_FOUND)
+    # Note: using the same version as celeritas to silence cmake config
+    # messages
+    find_package(VecGeom 1.2.4 REQUIRED)
+  endif()
+  if(NOT Geant4_FOUND)
+    find_package(Geant4 REQUIRED)
+  endif()
+
   add_subdirectory(test)
 endif()
 
@@ -59,5 +70,3 @@ install(EXPORT g4vg-targets
   DESTINATION "${G4VG_INSTALL_CMAKECONFIGDIR}"
   COMPONENT development
 )
-
-
