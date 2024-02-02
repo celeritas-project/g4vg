@@ -12,8 +12,13 @@ celeritas_rdc_add_library(g4vg SHARED
 celeritas_target_link_libraries(g4vg
   PRIVATE Celeritas::geocel
 )
+celeritas_target_include_directories(g4vg
+  PUBLIC
+    "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>"
+    "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
+)
 
-# Alias it for downstream code
+# Alias the library for downstream code
 add_library(G4VG::g4vg ALIAS g4vg)
 
 # Install all targets to lib/

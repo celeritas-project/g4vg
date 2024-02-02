@@ -11,10 +11,14 @@ add_executable(g4vg_test
   G4VG.test.cc
 )
 target_link_libraries(g4vg_test
-  GTest::GTest GTest::gtest_main
-  G4VG::g4vg
-  VecGeom::vecgeom
-  ${Geant4_LIBRARIES}
+  GTest::GTest GTest::gtest_main # For testing
+  G4VG::g4vg # Code to be tested
+  VecGeom::vecgeom # To build and check VecGeom objects
+  ${Geant4_LIBRARIES} # To set up and load Geant4
+  Celeritas::geocel # To wrap geant4 exceptions
+)
+target_include_directories(g4vg_test
+  PUBLIC "${PROJECT_BINARY_DIR}/test"
 )
 
 #-----------------------------------------------------------------------------#
