@@ -17,8 +17,8 @@ endmacro()
 FetchContent_Declare(
   Celeritas
   EXCLUDE_FROM_ALL
-  # Current tip of celeritas develop - adjust as needed
-  URL https://github.com/celeritas-project/celeritas/archive/5742b0c924a67bf02ec0ce9fc85719a70f7857e0.zip
+  GIT_REPOSITORY file:///Users/seth/Code/celeritas
+  GIT_TAG        HEAD
 )
 
 # $ git "describe" "--tags" "--match" "v*" 5742b0c924; format as below
