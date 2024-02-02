@@ -7,15 +7,13 @@
 cmake_minimum_required(VERSION 3.14...3.28)
 project(G4VG VERSION 0.1.0 LANGUAGES CXX)
 
-include(FetchContent)
-FetchContent_Declare(
-  celeritas
-  # Current tip of celeritas develop - adjust as needed
-  URL https://github.com/celeritas-project/celeritas/archive/5742b0c924a67bf02ec0ce9fc85719a70f7857e0.zip
-)
+#----------------------------------------------------------------------------#
+# Includes and setup
 
-# Set/force any Celeritas CMake args here before making it available, e.g.
-set(CELERITAS_USE_MPI OFF CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(celeritas)
+include(GNUInstallDirs)
 
-# Use any celeritas targets as normal (or CMake modules)
+#----------------------------------------------------------------------------#
+# Add code
+
+add_subdirectory(external)
+
