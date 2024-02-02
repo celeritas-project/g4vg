@@ -30,3 +30,21 @@
 *.exe
 *.out
 *.app
+
+# Misc
+*.cache
+*.pyc
+*.swp
+*~
+.DS_Store
+.nfs*
+.vscode
+/build*
+/install*
+/spack-build*
+/CMakeUserPresets.json
+Testing
+compile_commands.json
+cmake_install.cmake
+/CMakeCache.txt
+/CMakeFiles
