@@ -6,7 +6,7 @@
 
 #-----------------------------------------------------------------------------#
 # Add the library
-celeritas_rdc_add_library(g4vg
+celeritas_rdc_add_library(g4vg SHARED
   G4VG.cc
 )
 celeritas_target_link_libraries(g4vg

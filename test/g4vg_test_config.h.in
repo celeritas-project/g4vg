@@ -1,0 +1,14 @@
+/*----------------------------------*-C-*------------------------------------*
+ * Copyright 2024 UT-Battelle, LLC, and other Celeritas developers.
+ * See the top-level COPYRIGHT file for details.
+ * SPDX-License-Identifier: (Apache-2.0 OR MIT)
+ *---------------------------------------------------------------------------*/
+/*! \file g4vg_test_config.h
+ * Configuration-specific options for G4VG tests.
+ *---------------------------------------------------------------------------*/
+#ifndef g4vg_test_config_h
+#define g4vg_test_config_h
+
+static char const g4vg_source_dir[] = "@G4VG_SOURCE_DIR@";
+
+#endif /* g4vg_test_config_h */

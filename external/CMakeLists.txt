@@ -6,13 +6,6 @@
 
 include(FetchContent)
 
-macro(g4vg_set_default name value)
-  if(NOT DEFINED ${name})
-    message(VERBOSE "G4VG: set default ${name}=${value}")
-    set(${name} "${value}")
-  endif()
-endmacro()
-
 # Load Celeritas
 FetchContent_Declare(
   Celeritas
@@ -36,6 +29,7 @@ g4vg_set_default(CELERITAS_USE_HepMC3 OFF)
 g4vg_set_default(CELERITAS_USE_JSON OFF)
 g4vg_set_default(CELERITAS_USE_MPI OFF)
 g4vg_set_default(CELERITAS_USE_OpenMP OFF)
+g4vg_set_default(CELERITAS_USE_Python OFF)
 g4vg_set_default(CELERITAS_USE_ROOT OFF)
 g4vg_set_default(CELERITAS_USE_SWIG OFF)
 g4vg_set_default(CELERITAS_USE_VecGeom ON)
