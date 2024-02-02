@@ -16,4 +16,20 @@ include(GNUInstallDirs)
 # Add code
 
 add_subdirectory(external)
+add_subdirectory(src)
+
+#----------------------------------------------------------------------------#
+# Export CMake for installation downstream
+
+set(G4VG_INSTALL_CMAKECONFIGDIR "${CMAKE_INSTALL_LIBDIR}/cmake/G4VG")
+
+# Install 'G4VGTargets.cmake', included by G4VGConfig.cmake, which
+# references the targets we install.
+install(EXPORT g4vg-targets
+  FILE G4VGTargets.cmake
+  NAMESPACE G4VG::
+  DESTINATION "${G4VG_INSTALL_CMAKECONFIGDIR}"
+  COMPONENT development
+)
+
 
