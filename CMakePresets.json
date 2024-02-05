@@ -1,0 +1,67 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {"major": 3, "minor": 21, "patch": 0},
+  "configurePresets": [
+    {
+      "name": "default",
+      "displayName": "Automatic options",
+      "description": "Dependencies are enabled based on environment probing",
+      "binaryDir": "${sourceDir}/build-${presetName}",
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/install-${presetName}"
+      }
+    },
+    {
+      "name": ".cuda-volta",
+      "hidden": true,
+      "description": "Options to enable CUDA 11 on Volta architecture",
+      "cacheVariables": {
+        "CELERITAS_USE_CUDA":       {"type": "BOOL",   "value": "ON"},
+        "CMAKE_CUDA_ARCHITECTURES": {"type": "STRING", "value": "70"}
+      }
+    },
+    {
+      "name": ".ndebug",
+      "hidden": true,
+      "description": "Build with optimizations and without debug assertions",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": {"type": "STRING", "value": "Release"},
+        "CMAKE_CUDA_FLAGS_RELEASE": "-O3 -DNDEBUG"
+      }
+    },
+    {
+      "name": ".reldeb",
+      "hidden": true,
+      "description": "Enable debug with basic optimizations",
+      "cacheVariables": {
+        "BUILD_SHARED_LIBS":{"type": "BOOL", "value": "ON"},
+        "CMAKE_BUILD_TYPE": {"type": "STRING", "value": "RelWithDebInfo"}
+      }
+    },
+    {
+      "name": ".debug",
+      "hidden": true,
+      "description": "Enable debug mode",
+      "cacheVariables": {
+        "BUILD_SHARED_LIBS":{"type": "BOOL", "value": "ON"},
+        "CMAKE_BUILD_TYPE":     {"type": "STRING", "value": "Debug"}
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "default",
+      "jobs": 0,
+      "configurePreset": "default"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "default",
+      "configurePreset": "default",
+      "output": {"outputOnFailure": true},
+      "execution": {"noTestsAction": "error", "stopOnFailure": false, "jobs": 8}
+    }
+  ]
+}

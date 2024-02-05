@@ -1,0 +1,65 @@
+name: build-full
+on:
+  workflow_dispatch:
+  workflow_call:
+
+concurrency:
+  group: build-${{github.ref}}-${{github.event.pull_request.number || github.run_number}}-${{github.workflow}}
+  cancel-in-progress: true
+
+jobs:
+  # TODO: this currently includes non-GPU builds as well
+  # and won't actually run on device
+  gpu:
+    name: gpu
+    strategy:
+      fail-fast: false
+      matrix:
+        special: [null]
+        geometry: ['vecgeom']
+        buildtype: ['debug', 'ndebug']
+        image: ['ubuntu-cuda']
+    env:
+      CELER_DISABLE_DEVICE: 1 # IMPORTANT
+      CMAKE_PRESET: >-
+        ${{matrix.buildtype}}-${{matrix.geometry}}${{matrix.special && '-' || ''}}${{matrix.special}}
+    runs-on: ubuntu-latest
+    container:
+      image: >-
+        docker.io/celeritas/${{
+             matrix.image == 'ubuntu-cuda' && 'ci-jammy-cuda11:2023-08-02'
+          || null
+        }}
+      # See https://github.com/actions/checkout/issues/956
+      options: --user root
+    steps:
+      - name: Set up environment
+        run: |
+          . /etc/profile
+          echo "/opt/view/bin" >> $GITHUB_PATH
+          echo "CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}" >> $GITHUB_ENV
+      # NOTE: checkout must occur *after* setting up environment for git tags to work
+      # NOTE: checkout v4 fails: https://github.com/actions/checkout/issues/1487
+      # NOTE: depth must be enough to include the previous tag
+      - name: Check out
+        uses: actions/checkout@v3
+      - name: Configure
+        run: |
+          git config --global --add safe.directory ${PWD}
+          ln -fs scripts/cmake-presets/ci-${{matrix.image}}.json CMakeUserPresets.json
+          cmake --preset=${CMAKE_PRESET}
+      - name: Build
+        working-directory: build
+        run: |
+          ninja
+      - name: Test
+        working-directory: build
+        run: |
+          ctest --parallel 2 --timeout 180 --output-on-failure \
+            --test-output-size-passed=65536 --test-output-size-failed=1048576
+      - name: Install
+        working-directory: build
+        run: |
+          cmake --install .
+
+# vim: set nowrap tw=100:
