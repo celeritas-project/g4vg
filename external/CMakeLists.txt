@@ -10,12 +10,12 @@ include(FetchContent)
 FetchContent_Declare(
   Celeritas
   EXCLUDE_FROM_ALL
-  GIT_REPOSITORY file:///Users/seth/Code/celeritas
-  GIT_TAG        HEAD
+  GIT_REPOSITORY https://github.com/sethrj/celeritas.git
+  GIT_TAG        7c4d97c073a6682e45ddcabaeea065d9dd2b54d8
 )
 
 # $ git "describe" "--tags" "--match" "v*" 5742b0c924; format as below
-set(Celeritas_GIT_DESCRIBE "0.5.0" "-dev.9" "5742b0c92")
+set(Celeritas_GIT_DESCRIBE "0.5.0" "-dev.19" "7c4d97c07")
 
 # Minimally build Celeritas
 g4vg_set_default(CELERITAS_BUILD_DEMOS OFF)
