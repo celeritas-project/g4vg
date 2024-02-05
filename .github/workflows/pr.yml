@@ -6,8 +6,7 @@ run-name: >-
 on:
   pull_request:
     branches:
-      - develop
-      - backports/**
+      - main
     paths-ignore:
       - '**.rst'
       - '**.md'

@@ -8,8 +8,7 @@ name: push
 on:
   push:
     branches:
-      - develop
-      - backports/**
+      - main
 
 concurrency:
   group: push-${{github.ref}}-${{github.run_number}}-${{github.workflow}}
