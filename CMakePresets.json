@@ -17,7 +17,6 @@
       "hidden": true,
       "description": "Options to enable CUDA 11 on Volta architecture",
       "cacheVariables": {
-        "CELERITAS_USE_CUDA":       {"type": "BOOL",   "value": "ON"},
         "CMAKE_CUDA_ARCHITECTURES": {"type": "STRING", "value": "70"}
       }
     },

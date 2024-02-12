@@ -28,9 +28,7 @@
       "name": "debug-vecgeom",
       "description": "Build tests in debug with vecgeom",
       "inherits": [".vecgeom", "base"],
-      "cacheVariables": {
-        "CELERITAS_USE_OpenMP": {"type": "BOOL", "value": "OFF"}
-      }
+      "cacheVariables": {}
     },
     {
       "name": "reldeb-vecgeom",
