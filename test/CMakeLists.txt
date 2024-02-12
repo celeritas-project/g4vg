@@ -20,5 +20,6 @@ target_link_libraries(g4vg_test
 target_include_directories(g4vg_test
   PUBLIC "${PROJECT_BINARY_DIR}/test"
 )
+add_test(NAME g4vg_test COMMAND "$<TARGET_FILE:g4vg_test>")
 
 #-----------------------------------------------------------------------------#

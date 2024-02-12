@@ -19,21 +19,10 @@
       }
     },
     {
-      "name": ".mpi",
-      "hidden": true,
-      "description": "Options to enable MPI with Docker",
-      "cacheVariables": {
-        "CELERITAS_USE_MPI": {"type": "BOOL", "value": "ON"},
-        "MPI_CXX_LINK_FLAGS": "-pthread",
-        "MPIEXEC_PREFLAGS": "--allow-run-as-root"
-      }
-    },
-    {
       "name": ".vecgeom",
       "hidden": true,
       "description": "Options to enable VecGeom on Ubuntu",
-      "cacheVariables": {
-      }
+      "cacheVariables": {}
     },
     {
       "name": "debug-vecgeom",
@@ -64,8 +53,6 @@
       "verbose": true,
       "jobs": 16
     },
-    {"name": "debug-orange"       , "configurePreset": "debug-orange"       , "inherits": "base"},
-    {"name": "ndebug-orange", "configurePreset": "ndebug-orange", "inherits": "base", "targets": ["all", "install"]},
     {"name": "reldeb-vecgeom"  , "configurePreset": "reldeb-vecgeom"  , "inherits": "base", "targets": ["all", "install"]},
     {"name": "debug-vecgeom"   , "configurePreset": "debug-vecgeom"   , "inherits": "base", "jobs": 8},
     {"name": "ndebug-vecgeom"   , "configurePreset": "ndebug-vecgeom"   , "inherits": "base", "jobs": 8, "targets": ["app/all", "install"]}
@@ -86,8 +73,6 @@
         "outputOnFailure": true
       }
     },
-    {"name": "debug-orange"       , "configurePreset": "debug-orange"       , "inherits": "base"},
-    {"name": "ndebug-orange", "configurePreset": "ndebug-orange", "inherits": "base"},
     {"name": "reldeb-vecgeom"  , "configurePreset": "reldeb-vecgeom"  , "inherits": "base"},
     {"name": "debug-vecgeom"   , "configurePreset": "debug-vecgeom"   , "inherits": "base"},
     {"name": "ndebug-vecgeom"   , "configurePreset": "ndebug-vecgeom"   , "inherits": "base"}
