@@ -10,11 +10,12 @@ include(FetchContent)
 FetchContent_Declare(
   Celeritas
   EXCLUDE_FROM_ALL
-  URL https://github.com/celeritas-project/celeritas/archive/052ac4cd74abc0a6805f2a4168b4683bb589bb59.zip
+  URL https://github.com/celeritas-project/celeritas/archive/0f74ea935d72bed23b82fad98402bc68dd606d94.zip
 )
 
-# $ git "describe" "--tags" "--match" "v*" 052ac4cd7; format as below
-set(Celeritas_GIT_DESCRIBE "0.5.0" "-dev.20" "052ac4cd7")
+# $ git "describe" "--tags" "--match" "v*" <hash> ->
+# v0.5.0-dev-27-g0f74ea935
+set(Celeritas_GIT_DESCRIBE "0.5.0" "-dev.27" "0f74ea935")
 
 # Minimally build Celeritas
 g4vg_set_default(CELERITAS_BUILD_DEMOS OFF)

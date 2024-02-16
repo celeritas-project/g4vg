@@ -6,13 +6,13 @@
 
 #-----------------------------------------------------------------------------#
 # Add the library
-celeritas_rdc_add_library(g4vg SHARED
+cuda_rdc_add_library(g4vg SHARED
   G4VG.cc
 )
-celeritas_target_link_libraries(g4vg
+cuda_rdc_target_link_libraries(g4vg
   PRIVATE Celeritas::geocel
 )
-celeritas_target_include_directories(g4vg
+cuda_rdc_target_include_directories(g4vg
   PUBLIC
     "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>"
     "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
