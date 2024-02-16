@@ -9,7 +9,7 @@ include(FetchContent)
 # Load Celeritas
 FetchContent_Declare(
   Celeritas
-  EXCLUDE_FROM_ALL
+  EXCLUDE_FROM_ALL # see below...
   URL https://github.com/celeritas-project/celeritas/archive/0f74ea935d72bed23b82fad98402bc68dd606d94.zip
 )
 
@@ -42,6 +42,11 @@ g4vg_set_default(CELERITAS_REAL_TYPE double)
 # Build static libraries for celeritas
 g4vg_set_default(BUILD_SHARED_LIBS OFF)
 g4vg_set_default(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+if(CMAKE_VERSION VERSION_LESS 3.28)
+  # See https://gitlab.kitware.com/cmake/cmake/-/issues/20167
+  set_directory_properties(PROPERTIES EXCLUDE_FROM_ALL YES)
+endif()
 
 # Load Celeritas
 FetchContent_MakeAvailable(Celeritas)
