@@ -24,8 +24,6 @@ class VUnplacedVolume;
 }  // namespace cxx
 }  // namespace vecgeom
 
-namespace celeritas
-{
 namespace g4vg
 {
 //---------------------------------------------------------------------------//
@@ -124,4 +122,3 @@ SolidConverter::SolidConverter(Scaler const& convert_scale,
 
 //---------------------------------------------------------------------------//
 }  // namespace g4vg
-}  // namespace celeritas

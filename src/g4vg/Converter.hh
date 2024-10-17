@@ -11,8 +11,6 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include "corecel/Config.hh"
-
 #include "geocel/Types.hh"
 
 //---------------------------------------------------------------------------//
@@ -32,8 +30,6 @@ class VPlacedVolume;
 }  // namespace vecgeom
 //---------------------------------------------------------------------------//
 
-namespace celeritas
-{
 namespace g4vg
 {
 //---------------------------------------------------------------------------//
@@ -112,4 +108,3 @@ inline auto Converter::operator()(arg_type) -> result_type
 
 //---------------------------------------------------------------------------//
 }  // namespace g4vg
-}  // namespace celeritas

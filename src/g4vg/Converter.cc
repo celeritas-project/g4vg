@@ -32,8 +32,6 @@
 #include "Transformer.hh"
 #include "geocel/GeantGeoUtils.hh"
 
-namespace celeritas
-{
 namespace g4vg
 {
 namespace
@@ -281,4 +279,3 @@ auto Converter::build_with_daughters(G4LogicalVolume const* mother_g4lv)
 
 //---------------------------------------------------------------------------//
 }  // namespace g4vg
-}  // namespace celeritas

@@ -14,8 +14,6 @@
 
 #include "Scaler.hh"
 
-namespace celeritas
-{
 namespace g4vg
 {
 //---------------------------------------------------------------------------//
@@ -123,4 +121,3 @@ auto Transformer::operator()(G4AffineTransform const& affine) const -> result_ty
 
 //---------------------------------------------------------------------------//
 }  // namespace g4vg
-}  // namespace celeritas

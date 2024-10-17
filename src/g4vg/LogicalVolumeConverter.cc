@@ -19,8 +19,6 @@
 #include "SolidConverter.hh"
 #include "geocel/GeantGeoUtils.hh"
 
-namespace celeritas
-{
 namespace g4vg
 {
 //---------------------------------------------------------------------------//
@@ -106,4 +104,3 @@ auto LogicalVolumeConverter::construct_base(arg_type g4lv) -> result_type
 
 //---------------------------------------------------------------------------//
 }  // namespace g4vg
-}  // namespace celeritas

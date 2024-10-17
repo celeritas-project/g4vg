@@ -13,8 +13,6 @@
 
 #include "geocel/detail/LengthUnits.hh"
 
-namespace celeritas
-{
 namespace g4vg
 {
 //---------------------------------------------------------------------------//
@@ -48,4 +46,3 @@ class Scaler
 
 //---------------------------------------------------------------------------//
 }  // namespace g4vg
-}  // namespace celeritas

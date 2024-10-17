@@ -92,8 +92,6 @@
 
 using namespace vecgeom;
 
-namespace celeritas
-{
 namespace g4vg
 {
 namespace
@@ -751,4 +749,3 @@ double SolidConverter::calc_capacity(G4VSolid const& g4) const
 
 //---------------------------------------------------------------------------//
 }  // namespace g4vg
-}  // namespace celeritas
