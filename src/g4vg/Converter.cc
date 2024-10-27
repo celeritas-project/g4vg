@@ -92,7 +92,7 @@ class DaughterPlacer
   public:
     using VGLogicalVolume = vecgeom::LogicalVolume;
     using VGPlacedVolume = vecgeom::VPlacedVolume;
-    using VecPv = Converter::VecPv;
+    using VecPv = std::vector<G4VPhysicalVolume const*>;
 
     template<class F>
     DaughterPlacer(F&& build_vgdaughter,
@@ -166,7 +166,7 @@ class DaughterPlacer
 //! Construct with scale
 Converter::Converter(Options options)
     : options_{options}
-    , convert_scale_{std::make_unique<Scaler>()}
+    , convert_scale_{std::make_unique<Scaler>(options.scale)}
     , convert_transform_{std::make_unique<Transformer>(*convert_scale_)}
     , convert_solid_{std::make_unique<SolidConverter>(
           *convert_scale_, *convert_transform_, options.compare_volumes)}

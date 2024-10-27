@@ -18,13 +18,16 @@ namespace g4vg
 //---------------------------------------------------------------------------//
 /*!
  * Convert a unit from Geant4 scale to another.
- *
- * Currently the scale is hardcoded as mm (i.e., CLHEP units) but could easily
- * be a class attribute.
  */
 class Scaler
 {
   public:
+    //! Construct with numeric value of 1mm in native system
+    explicit Scaler(double one_mm) : scale_{one_mm}
+    {
+        CELER_EXPECT(scale_ > 0);
+    }
+
     //! Convert a positional scalar
     double operator()(double val) const { return val * scale_; }
 
@@ -41,7 +44,7 @@ class Scaler
     }
 
   private:
-    inline static constexpr double scale_ = celeritas::lengthunits::millimeter;
+    double scale_;
 };
 
 //---------------------------------------------------------------------------//

@@ -38,8 +38,8 @@ struct Options
     //! Perform conversion checks
     bool compare_volumes{false};
 
-    //! TODO: allow client to use a different unit system (default: mm = 1)
-    static constexpr double scale = 1;
+    //! Value of 1mm in native unit system (0.1 for cm)
+    double scale = 1;
 };
 
 //---------------------------------------------------------------------------//
@@ -49,13 +49,16 @@ struct Options
 struct Converted
 {
     using VGPlacedVolume = vecgeom::VPlacedVolume;
-    using MapLvVolId = std::unordered_map<G4LogicalVolume const*, unsigned int>;
+    using VecLv = std::vector<G4LogicalVolume const*>;
+    using VecPv = std::vector<G4VPhysicalVolume const*>;
 
     //! World pointer (host) corresponding to input Geant4 world
     VGPlacedVolume* world{nullptr};
 
-    //! Map of Geant4 logical volumes to VecGeom LV IDs
-    MapLvVolId volumes;
+    //! Geant4 LVs indexed by VecGeom LogicalVolume ID
+    VecLv logical_volumes;
+    //! Geant4 PVs indexed by VecGeom PlacedVolume ID
+    VecPv physical_volumes;
 };
 
 //---------------------------------------------------------------------------//

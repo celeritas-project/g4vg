@@ -11,24 +11,8 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include "G4VG.hh"
 #include "geocel/Types.hh"
-
-//---------------------------------------------------------------------------//
-// Forward declarations
-//---------------------------------------------------------------------------//
-
-class G4LogicalVolume;
-class G4VPhysicalVolume;
-
-namespace vecgeom
-{
-inline namespace cxx
-{
-class LogicalVolume;
-class VPlacedVolume;
-}  // namespace cxx
-}  // namespace vecgeom
-//---------------------------------------------------------------------------//
 
 namespace g4vg
 {
@@ -51,29 +35,12 @@ class Converter
     //!@{
     //! \name Type aliases
     using arg_type = G4VPhysicalVolume const*;
-    using VecLv = std::vector<G4LogicalVolume const*>;
     using VecPv = std::vector<G4VPhysicalVolume const*>;
-    using VGPlacedVolume = vecgeom::VPlacedVolume;
     //!@}
-
-    struct Options
-    {
-        bool verbose{false};
-        bool compare_volumes{false};
-    };
-
-    struct result_type
-    {
-        VGPlacedVolume* world{nullptr};
-        VecLv logical_volumes;  //!< Indexed by VecGeom LogicalVolume ID
-        VecPv physical_volumes;  //!< Indexed by VecGeom PlacedVolume ID
-    };
 
   public:
     // Construct with options
-    explicit Converter(Options);
-    // Construct with default options
-    Converter() : Converter{Options{}} {}
+    explicit Converter(Options const&);
 
     // Default destructor
     ~Converter();
