@@ -7,7 +7,7 @@
 //---------------------------------------------------------------------------//
 #include "G4VG.hh"
 
-#include "g4vg/Converter.hh"
+#include "g4vg_impl/Converter.hh"
 
 namespace g4vg
 {
