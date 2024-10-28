@@ -79,14 +79,6 @@
 #include <VecGeom/volumes/UnplacedTrd.h>
 #include <VecGeom/volumes/UnplacedTube.h>
 
-#include "corecel/Constants.hh"
-#include "corecel/cont/Array.hh"
-#include "corecel/cont/Range.hh"
-#include "corecel/io/Logger.hh"
-#include "corecel/math/Algorithms.hh"
-#include "corecel/math/SoftEqual.hh"
-#include "corecel/sys/TypeDemangler.hh"
-
 #include "Scaler.hh"
 #include "Transformer.hh"
 
@@ -94,6 +86,11 @@ using namespace vecgeom;
 
 namespace g4vg
 {
+namespace constants
+{
+inline constexpr double pi = 3.14159265358979323846;
+}
+
 namespace
 {
 //---------------------------------------------------------------------------//

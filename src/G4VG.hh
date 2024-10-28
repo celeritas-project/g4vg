@@ -12,6 +12,7 @@
 //---------------------------------------------------------------------------//
 // FORWARD DECLARATIONS
 //---------------------------------------------------------------------------//
+
 class G4LogicalVolume;
 class G4VPhysicalVolume;
 
@@ -19,9 +20,11 @@ namespace vecgeom
 {
 inline namespace cxx
 {
+class LogicalVolume;
 class VPlacedVolume;
 }  // namespace cxx
 }  // namespace vecgeom
+
 //---------------------------------------------------------------------------//
 
 namespace g4vg
@@ -66,7 +69,7 @@ struct Converted
 Converted convert(G4VPhysicalVolume const* world);
 
 // Convert with custom options
-Converted convert(G4VPhysicalVolume const* world, Options options);
+Converted convert(G4VPhysicalVolume const* world, Options const& options);
 
 //---------------------------------------------------------------------------//
 }  // namespace g4vg

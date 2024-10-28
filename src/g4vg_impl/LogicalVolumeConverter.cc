@@ -13,11 +13,7 @@
 #include <VecGeom/volumes/LogicalVolume.h>
 #include <VecGeom/volumes/UnplacedVolume.h>
 
-#include "corecel/Assert.hh"
-#include "corecel/io/Logger.hh"
-
 #include "SolidConverter.hh"
-#include "geocel/GeantGeoUtils.hh"
 
 namespace g4vg
 {

@@ -9,8 +9,7 @@
 
 #include <unordered_map>
 
-#include "corecel/Types.hh"
-#include "corecel/cont/Array.hh"
+#include "CeleritasUtils.hh"
 
 class G4VSolid;
 class G4BooleanSolid;

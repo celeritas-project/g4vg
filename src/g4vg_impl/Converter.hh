@@ -11,8 +11,8 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include "CeleritasUtils.hh"
 #include "G4VG.hh"
-#include "geocel/Types.hh"
 
 namespace g4vg
 {
@@ -36,6 +36,7 @@ class Converter
     //! \name Type aliases
     using arg_type = G4VPhysicalVolume const*;
     using VecPv = std::vector<G4VPhysicalVolume const*>;
+    using result_type = g4vg::Converted;
     //!@}
 
   public:

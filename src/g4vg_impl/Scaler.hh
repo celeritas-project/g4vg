@@ -11,8 +11,6 @@
 #include <G4ThreeVector.hh>
 #include <G4TwoVector.hh>
 
-#include "geocel/detail/LengthUnits.hh"
-
 namespace g4vg
 {
 //---------------------------------------------------------------------------//

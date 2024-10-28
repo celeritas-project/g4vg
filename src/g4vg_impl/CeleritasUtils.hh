@@ -3,40 +3,23 @@
 // See the top-level COPYRIGHT file for details.
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
-//! \file G4VG.cc
+//! \file g4vg_impl/CeleritasUtils.hh
 //---------------------------------------------------------------------------//
-#include "G4VG.hh"
+#pragma once
 
-#include "g4vg_impl/Converter.hh"
+#include <cstddef>
 
 namespace g4vg
 {
 //---------------------------------------------------------------------------//
-/*!
- * Convert a Geant4 geometry to a VecGeom geometry.
- *
- * Return the new world volume and a mapping of Geant4 logical volumes to
- * VecGeom-based volume IDs.
- */
-Converted convert(G4VPhysicalVolume const* world)
-{
-    return convert(world, {});
-}
-
+// TYPES
 //---------------------------------------------------------------------------//
-/*!
- * Convert with custom options.
- */
-Converted convert(G4VPhysicalVolume const* world, Options const& options)
-{
-    using Converter = g4vg::Converter;
 
-    // Construct converter
-    Converter convert{options};
+using real_type = double;
+using size_type = std::size_t;
+using VolumeId = size_type;
 
-    // Convert
-    return convert(world);
-}
-
+template<class T, size_type N>
+using Array = std::array<T, N>;
 //---------------------------------------------------------------------------//
 }  // namespace g4vg

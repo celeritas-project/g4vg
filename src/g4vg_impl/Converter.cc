@@ -20,18 +20,10 @@
 #include <VecGeom/volumes/LogicalVolume.h>
 #include <VecGeom/volumes/PlacedVolume.h>
 
-#include "corecel/cont/Range.hh"
-#include "corecel/io/Logger.hh"
-#include "corecel/io/ScopedTimeLog.hh"
-#include "corecel/sys/ScopedMem.hh"
-#include "corecel/sys/ScopedProfiling.hh"
-#include "corecel/sys/TypeDemangler.hh"
-
 #include "LogicalVolumeConverter.hh"
 #include "Scaler.hh"
 #include "SolidConverter.hh"
 #include "Transformer.hh"
-#include "geocel/GeantGeoUtils.hh"
 
 namespace g4vg
 {

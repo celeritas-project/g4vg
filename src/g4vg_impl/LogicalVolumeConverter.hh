@@ -9,7 +9,7 @@
 
 #include <unordered_map>
 
-#include "geocel/Types.hh"
+#include "CeleritasUtils.hh"
 
 //---------------------------------------------------------------------------//
 // Forward declarations
