@@ -728,7 +728,8 @@ void SolidConverter::compare_volumes(G4VSolid const& g4,
     auto g4_cap = this->calc_capacity(g4);
     auto vg_cap = vg.Capacity();
 
-    if (G4VG_UNLIKELY(!SoftEqual{0.01}(vg_cap, g4_cap)))
+    if (G4VG_UNLIKELY(
+            !(std::fabs(vg_cap - g4_cap) < 0.01 * std::max(vg_cap, g4_cap))))
     {
         VECGEOM_LOG(warning)
             << "Solid type '" << g4.GetEntityType()
