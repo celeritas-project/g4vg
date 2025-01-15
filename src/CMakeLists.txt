@@ -13,6 +13,7 @@ set(PUBLIC_DEPS VecGeom::vecgeom)
 #-----------------------------------------------------------------------------#
 
 add_library(g4vg_impl OBJECT
+  g4vg_impl/Assert.cc
   g4vg_impl/Converter.cc
   g4vg_impl/LogicalVolumeConverter.cc
   g4vg_impl/SolidConverter.cc
