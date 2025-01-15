@@ -741,7 +741,9 @@ void SolidConverter::compare_volumes(G4VSolid const& g4,
 //! Calculate the capacity in native celeritas units
 double SolidConverter::calc_capacity(G4VSolid const& g4) const
 {
-    return const_cast<G4VSolid&>(g4).GetCubicVolume() * ipow<3>(scale_(1.0));
+    double const unit_scale = scale_(1.0);
+    return const_cast<G4VSolid&>(g4).GetCubicVolume()
+           * (unit_scale * unit_scale * unit_scale);
 }
 
 //---------------------------------------------------------------------------//
