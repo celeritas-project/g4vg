@@ -6,6 +6,7 @@
 //---------------------------------------------------------------------------//
 #pragma once
 
+#include <sstream>
 #include <stdexcept>
 
 #if !defined(G4VG_DEBUG)
@@ -93,7 +94,7 @@
     } while (0)
 
 #define G4VG_RUNTIME_THROW(WHICH, WHAT, COND) \
-    throw ::g4vg::RuntimeError(WHAT, COND, __FILE__, __LINE__, )
+    throw ::g4vg::RuntimeError(WHICH, WHAT, COND, __FILE__, __LINE__, )
 
 #if G4VG_DEBUG
 #    define G4VG_EXPECT(COND) G4VG_DEBUG_ASSERT_(COND, precondition)
@@ -169,10 +170,14 @@ class RuntimeError : public std::runtime_error
     // Default destructor to anchor vtable
     ~RuntimeError() override;
 
-    //!@{
     //! String constants for "which" error message
     static char const validate_err_str[];
-    //!@}
+
+    //! Underlying issue
+    std::string const& what_minimal() const;
+
+  private:
+    std::string what_;
 };
 
 //---------------------------------------------------------------------------//

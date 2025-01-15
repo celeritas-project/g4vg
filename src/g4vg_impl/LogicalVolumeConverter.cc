@@ -79,7 +79,7 @@ auto LogicalVolumeConverter::construct_base(arg_type g4lv) -> result_type
         VECGEOM_LOG(error) << "Failed to convert solid type '"
                            << g4lv.GetSolid()->GetEntityType() << "' named '"
                            << g4lv.GetSolid()->GetName()
-                           << "': " << e.details().what;
+                           << "': " << e.what_minimal();
         shape = this->convert_solid_.to_sphere(*g4lv.GetSolid());
         VECGEOM_LOG(warning)
             << "Replaced unknown solid with sphere with capacity "
