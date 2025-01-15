@@ -6,6 +6,7 @@
 //---------------------------------------------------------------------------//
 #pragma once
 
+#include <string>
 #include <sstream>
 #include <stdexcept>
 
@@ -94,7 +95,7 @@
     } while (0)
 
 #define G4VG_RUNTIME_THROW(WHICH, WHAT, COND) \
-    throw ::g4vg::RuntimeError(WHICH, WHAT, COND, __FILE__, __LINE__, )
+    throw ::g4vg::RuntimeError(WHICH, WHAT, COND, __FILE__, __LINE__)
 
 #if G4VG_DEBUG
 #    define G4VG_EXPECT(COND) G4VG_DEBUG_ASSERT_(COND, precondition)

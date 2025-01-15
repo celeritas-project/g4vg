@@ -155,7 +155,7 @@ class DaughterPlacer
 
 //---------------------------------------------------------------------------//
 //! Construct with scale
-Converter::Converter(Options options)
+Converter::Converter(Options const& options)
     : options_{options}
     , convert_scale_{std::make_unique<Scaler>(options.scale)}
     , convert_transform_{std::make_unique<Transformer>(*convert_scale_)}
