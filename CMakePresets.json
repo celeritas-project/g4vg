@@ -26,6 +26,7 @@
       "description": "Build with optimizations and without debug assertions",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": {"type": "STRING", "value": "Release"},
+        "G4VG_DEBUG":{"type": "BOOL", "value": "OFF"},
         "CMAKE_CUDA_FLAGS_RELEASE": "-O3 -DNDEBUG"
       }
     },
@@ -44,6 +45,7 @@
       "description": "Enable debug mode",
       "cacheVariables": {
         "BUILD_SHARED_LIBS":{"type": "BOOL", "value": "ON"},
+        "G4VG_DEBUG":{"type": "BOOL", "value": "ON"},
         "CMAKE_BUILD_TYPE":     {"type": "STRING", "value": "Debug"}
       }
     }

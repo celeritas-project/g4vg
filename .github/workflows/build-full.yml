@@ -16,22 +16,19 @@ jobs:
       fail-fast: false
       matrix:
         special: [null]
-        geometry: ['vecgeom']
         buildtype: ['debug', 'ndebug']
-        image: ['ubuntu-cuda']
+        image: ['rocky-cuda']
     env:
       CELER_DISABLE_DEVICE: 1 # IMPORTANT
       CMAKE_PRESET: >-
-        ${{matrix.buildtype}}-${{matrix.geometry}}${{matrix.special && '-' || ''}}${{matrix.special}}
+        ${{matrix.buildtype}}-${{matrix.special && '-' || ''}}${{matrix.special}}
     runs-on: ubuntu-latest
     container:
       image: >-
         docker.io/celeritas/${{
-             matrix.image == 'ubuntu-cuda' && 'ci-jammy-cuda11:2023-08-02'
+             matrix.image == 'rocky-cuda' && 'ci-rocky-cuda12:2024-12-29'
           || null
         }}
-      # See https://github.com/actions/checkout/issues/956
-      options: --user root
     steps:
       - name: Set up environment
         run: |
@@ -39,24 +36,22 @@ jobs:
           echo "/opt/view/bin" >> $GITHUB_PATH
           echo "CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}" >> $GITHUB_ENV
       # NOTE: checkout must occur *after* setting up environment for git tags to work
-      # NOTE: checkout v4 fails: https://github.com/actions/checkout/issues/1487
       # NOTE: depth must be enough to include the previous tag
       - name: Check out
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Configure
         run: |
           git config --global --add safe.directory ${PWD}
+          git fetch --tags
           ln -fs scripts/cmake-presets/ci-${{matrix.image}}.json CMakeUserPresets.json
-          cmake --preset=${CMAKE_PRESET}
+          cmake --preset=${CMAKE_PRESET} --log-level=VERBOSE
       - name: Build
         working-directory: build
         run: |
-          ninja
+          ninja -v -k0
       - name: Test
-        working-directory: build
         run: |
-          ctest --parallel 2 --timeout 180 --output-on-failure \
-            --test-output-size-passed=65536 --test-output-size-failed=1048576
+          ctest --preset=base
       - name: Install
         working-directory: build
         run: |
