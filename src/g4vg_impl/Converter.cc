@@ -120,8 +120,8 @@ class DaughterPlacer
     {
         G4VG_EXPECT(g4pv);
 
-        vecgeom::Vector3D<real_type> const reflvec{
-            1, 1, static_cast<real_type>(flip_z_ ? -1 : 1)};
+        vecgeom::Vector3D<double> const reflvec{
+            1, 1, static_cast<double>(flip_z_ ? -1 : 1)};
 
         // Use the VGDML reflection factory to place the daughter in the
         // mother (it must *always* be used, in case parent is reflected)

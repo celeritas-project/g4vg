@@ -48,7 +48,7 @@ auto LogicalVolumeConverter::operator()(arg_type lv) -> result_type
 
 //---------------------------------------------------------------------------//
 /*!
- * Construct a mapping from G4 logical volume to VolumeId.
+ * Construct a mapping from G4 logical volume to logical volume ID.
  */
 auto LogicalVolumeConverter::make_volume_map() const -> MapLvVolId
 {
@@ -58,7 +58,7 @@ auto LogicalVolumeConverter::make_volume_map() const -> MapLvVolId
     for (auto const& kv : cache_)
     {
         G4VG_ASSERT(kv.second);
-        result.insert({kv.first, VolumeId{kv.second->id()}});
+        result.insert({kv.first, kv.second->id()});
     }
     return result;
 }

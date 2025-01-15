@@ -37,7 +37,7 @@ g4vg_set_default(CELERITAS_USE_VecGeom ON)
 # Use VecGeom, mm, and double precision
 g4vg_set_default(CELERITAS_CORE_GEO VecGeom)
 g4vg_set_default(CELERITAS_UNITS CLHEP)
-g4vg_set_default(CELERITAS_REAL_TYPE double)
+g4vg_set_default(CELERITAS_double double)
 
 # Build static libraries for celeritas
 g4vg_set_default(BUILD_SHARED_LIBS OFF)

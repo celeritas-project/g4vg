@@ -45,7 +45,7 @@ class LogicalVolumeConverter
     //! \name Type aliases
     using arg_type = G4LogicalVolume const&;
     using result_type = vecgeom::LogicalVolume*;
-    using MapLvVolId = std::unordered_map<G4LogicalVolume const*, VolumeId>;
+    using MapLvVolId = std::unordered_map<G4LogicalVolume const*, unsigned int>;
     //!@}
 
   public:
@@ -54,7 +54,7 @@ class LogicalVolumeConverter
     // Convert a volume
     result_type operator()(arg_type);
 
-    // Construct a mapping from G4 logical volume to VolumeId
+    // Construct a mapping from G4 logical volume to logical volume ID
     MapLvVolId make_volume_map() const;
 
   private:

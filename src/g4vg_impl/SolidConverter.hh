@@ -56,7 +56,7 @@ class SolidConverter
   private:
     //// TYPES ////
 
-    using PlacedBoolVolumes = Array<vecgeom::VPlacedVolume const*, 2>;
+    using PlacedBoolVolumes = std::Array<vecgeom::VPlacedVolume const*, 2>;
 
     //// DATA ////
 
