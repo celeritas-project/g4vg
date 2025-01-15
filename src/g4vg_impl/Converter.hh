@@ -10,7 +10,6 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include "CeleritasUtils.hh"
 #include "G4VG.hh"
 
 namespace g4vg

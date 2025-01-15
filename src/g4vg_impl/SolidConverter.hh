@@ -6,9 +6,8 @@
 //---------------------------------------------------------------------------//
 #pragma once
 
+#include <array>
 #include <unordered_map>
-
-#include "CeleritasUtils.hh"
 
 class G4VSolid;
 class G4BooleanSolid;
@@ -55,7 +54,7 @@ class SolidConverter
   private:
     //// TYPES ////
 
-    using PlacedBoolVolumes = std::Array<vecgeom::VPlacedVolume const*, 2>;
+    using PlacedBoolVolumes = std::array<vecgeom::VPlacedVolume const*, 2>;
 
     //// DATA ////
 

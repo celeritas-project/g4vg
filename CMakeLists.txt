@@ -24,6 +24,7 @@ endmacro()
 # Options
 
 option(G4VG_BUILD_TESTS "Build G4VG unit tests" OFF)
+option(G4VG_DEBUG "Add runtime assertions" ON)
 g4vg_set_default(BUILD_TESTING ${G4VG_BUILD_TESTS})
 
 g4vg_set_default(CMAKE_CXX_EXTENSIONS OFF)
@@ -37,11 +38,18 @@ find_package(Geant4 REQUIRED)
 find_package(VecGeom REQUIRED)
 
 # Celeritas *might* be coming from a superproject...
-if(NOT Celeritas_FOUND)
-  find_package(Celeritas QUIET)
+if(G4VG_BUILD_TESTS)
   if(NOT Celeritas_FOUND)
-    add_subdirectory(external)
+    find_package(Celeritas QUIET)
+    if(NOT Celeritas_FOUND)
+      add_subdirectory(external)
+    endif()
   endif()
+endif()
+
+if(NOT Celeritas_FOUND)
+  # Load CUDA RDC utils from VecGeom
+  include(CudaRdcUtils)
 endif()
 
 #----------------------------------------------------------------------------#

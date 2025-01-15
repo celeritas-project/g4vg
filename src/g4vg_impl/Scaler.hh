@@ -10,6 +10,8 @@
 #include <G4ThreeVector.hh>
 #include <G4TwoVector.hh>
 
+#include "Assert.hh"
+
 namespace g4vg
 {
 //---------------------------------------------------------------------------//

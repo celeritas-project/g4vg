@@ -547,7 +547,7 @@ auto SolidConverter::tessellatedsolid(arg_type solid_base) -> result_type
     {
         G4VFacet const& facet = *solid.GetFacet(i);
         int const num_vtx = facet.GetNumberOfVertices();
-        std::Array<Vertex, 4> vtx;
+        std::array<Vertex, 4> vtx;
         for (auto iv : range(num_vtx))
         {
             auto vxg4 = facet.GetVertex(iv);
@@ -573,7 +573,7 @@ auto SolidConverter::tessellatedsolid(arg_type solid_base) -> result_type
 auto SolidConverter::tet(arg_type solid_base) -> result_type
 {
     auto const& solid = dynamic_cast<G4Tet const&>(solid_base);
-    std::Array<G4ThreeVector, 4> points;
+    std::array<G4ThreeVector, 4> points;
 #if G4VERSION_NUMBER >= 1060
     solid.GetVertices(points[0], points[1], points[2], points[3]);
 #else
@@ -673,7 +673,7 @@ auto SolidConverter::unionsolid(arg_type solid_base) -> result_type
 auto SolidConverter::convert_bool_impl(G4BooleanSolid const& bs)
     -> PlacedBoolVolumes
 {
-    static std::Array<char const*, 2> const lr = {{"left", "right"}};
+    static std::array<char const*, 2> const lr = {{"left", "right"}};
     PlacedBoolVolumes result;
 
     for (auto i : range(lr.size()))

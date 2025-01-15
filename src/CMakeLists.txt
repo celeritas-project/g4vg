@@ -22,6 +22,7 @@ target_include_directories(g4vg_impl
     "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>"
 )
 target_compile_features(g4vg_impl PUBLIC cxx_std_17)
+target_compile_definitions(g4vg_impl PRIVATE G4VG_DEBUG=$<BOOL:${G4VG_DEBUG}>)
 
 install(TARGETS g4vg_impl
   EXPORT g4vg-targets
