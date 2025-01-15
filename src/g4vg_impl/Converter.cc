@@ -24,6 +24,7 @@
 #include "Scaler.hh"
 #include "SolidConverter.hh"
 #include "Transformer.hh"
+#include "TypeDemangler.hh"
 
 namespace g4vg
 {

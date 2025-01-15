@@ -80,6 +80,7 @@
 
 #include "Scaler.hh"
 #include "Transformer.hh"
+#include "TypeDemangler.hh"
 
 using namespace vecgeom;
 
