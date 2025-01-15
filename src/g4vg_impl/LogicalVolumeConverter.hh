@@ -1,9 +1,8 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2023-2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright G4VG contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
-//! \file geocel/g4vg/LogicalVolumeConverter.hh
+//! \file g4vg_impl/LogicalVolumeConverter.hh
 //---------------------------------------------------------------------------//
 #pragma once
 
