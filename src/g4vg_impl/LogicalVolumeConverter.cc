@@ -13,9 +13,9 @@
 #include <VecGeom/volumes/UnplacedVolume.h>
 
 #include "Assert.hh"
+#include "GDMLUtils.hh"
 #include "PrintableLV.hh"
 #include "SolidConverter.hh"
-#include "GDMLUtils.hh"
 
 namespace g4vg
 {
