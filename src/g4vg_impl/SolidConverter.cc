@@ -315,7 +315,7 @@ auto SolidConverter::extrudedsolid(arg_type solid_base) -> result_type
     // Convert vertices
     std::vector<double> x(solid.GetNofVertices());
     std::vector<double> y(x.size());
-    for (auto i : range(x.size()))
+    for (std::size_t i = 0; i < x.size(); ++i)
     {
         std::tie(x[i], y[i]) = scale_(solid.GetVertex(i));
     }
@@ -329,7 +329,7 @@ auto SolidConverter::extrudedsolid(arg_type solid_base) -> result_type
                            << " Z sections, but VecGeom requires exactly 2";
         G4VG_ASSERT(z.size() >= 2);
     }
-    for (auto i : range(z.size()))
+    for (std::size_t i = 0; i < z.size(); ++i)
     {
         G4ExtrudedSolid::ZSection const& zsec = solid.GetZSection(i);
         G4VG_VALIDATE(zsec.fScale == 1.0,
@@ -352,7 +352,7 @@ auto SolidConverter::genericpolycone(arg_type solid_base) -> result_type
 
     std::vector<double> zs(solid.GetNumRZCorner());
     std::vector<double> rs(zs.size());
-    for (auto i : range(zs.size()))
+    for (std::size_t i = 0; i < zs.size(); ++i)
     {
         G4PolyconeSideRZ const& rzCorner = solid.GetCorner(i);
         zs[i] = scale_(rzCorner.z);
@@ -375,7 +375,7 @@ auto SolidConverter::generictrap(arg_type solid_base) -> result_type
 
     std::vector<double> vx(solid.GetNofVertices());
     std::vector<double> vy(vx.size());
-    for (auto i : range(vx.size()))
+    for (std::size_t i = 0; i < vx.size(); ++i)
     {
         std::tie(vx[i], vy[i]) = scale_(solid.GetVertex(i));
     }
@@ -457,7 +457,7 @@ auto SolidConverter::polycone(arg_type solid_base) -> result_type
     std::vector<double> zvals(params.Num_z_planes);
     std::vector<double> rmins(zvals.size());
     std::vector<double> rmaxs(zvals.size());
-    for (auto i : range(zvals.size()))
+    for (std::size_t i = 0; i < zvals.size(); ++i)
     {
         zvals[i] = scale_(params.Z_values[i]);
         rmins[i] = scale_(params.Rmin[i]);
@@ -484,7 +484,7 @@ auto SolidConverter::polyhedra(arg_type solid_base) -> result_type
     std::vector<double> zs(params.Num_z_planes);
     std::vector<double> rmins(zs.size());
     std::vector<double> rmaxs(zs.size());
-    for (auto i : range(zs.size()))
+    for (std::size_t i = 0; i < zs.size(); ++i)
     {
         zs[i] = scale_(params.Z_values[i]);
         rmins[i] = scale_(params.Rmin[i] * radius_factor);
@@ -544,12 +544,12 @@ auto SolidConverter::tessellatedsolid(arg_type solid_base) -> result_type
 
     auto* result = GeoManager::MakeInstance<UnplacedTessellated>();
 
-    for (auto i : range(solid.GetNumberOfFacets()))
+    for (int i = 0, imax = solid.GetNumberOfFacets(); i < imax; ++i)
     {
         G4VFacet const& facet = *solid.GetFacet(i);
         int const num_vtx = facet.GetNumberOfVertices();
         std::array<Vertex, 4> vtx;
-        for (auto iv : range(num_vtx))
+        for (int iv = 0; iv < num_vtx; ++iv)
         {
             auto vxg4 = facet.GetVertex(iv);
             vtx[iv].Set(scale_(vxg4.x()), scale_(vxg4.y()), scale_(vxg4.z()));
@@ -677,7 +677,7 @@ auto SolidConverter::convert_bool_impl(G4BooleanSolid const& bs)
     static std::array<char const*, 2> const lr = {{"left", "right"}};
     PlacedBoolVolumes result;
 
-    for (auto i : range(lr.size()))
+    for (std::size_t i = 0; i < lr.size(); ++i)
     {
         G4VSolid const* solid = bs.GetConstituentSolid(i);
         G4VG_ASSERT(solid);

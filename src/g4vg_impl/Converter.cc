@@ -67,7 +67,7 @@ struct LVMapVisitor
         all_lv->insert(lv);
 
         // Visit daughters
-        for (auto const i : range(lv->GetNoDaughters()))
+        for (auto i = 0; i < lv->GetNoDaughters(); ++i)
         {
             G4VPhysicalVolume const* daughter{lv->GetDaughter(i)};
             G4VG_ASSERT(daughter);
@@ -243,7 +243,7 @@ auto Converter::build_with_daughters(G4LogicalVolume const* mother_g4lv)
     };
 
     // Place daughter logical volumes in this mother
-    for (auto i : range(mother_g4lv->GetNoDaughters()))
+    for (auto i = 0; i < mother_g4lv->GetNoDaughters(); ++i)
     {
         // Get daughter volume
         G4VPhysicalVolume* g4pv = mother_g4lv->GetDaughter(i);
@@ -262,7 +262,7 @@ auto Converter::build_with_daughters(G4LogicalVolume const* mother_g4lv)
         else if (G4VPVParameterisation* param = g4pv->GetParameterisation())
         {
             // Loop over number of replicas
-            for (auto j : range(g4pv->GetMultiplicity()))
+            for (auto j = 0; j < g4pv->GetMultiplicity(); ++j)
             {
                 // Use the paramterization to *change* the physical volume's
                 // position (yes, this is how Geant4 does it too)
