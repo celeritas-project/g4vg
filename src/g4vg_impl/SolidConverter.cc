@@ -140,7 +140,7 @@ auto SolidConverter::operator()(arg_type solid_base) -> result_type
         cache_iter->second = this->convert_impl(solid_base);
     }
 
-    CELER_ENSURE(cache_iter->second);
+    G4VG_ENSURE(cache_iter->second);
     return cache_iter->second;
 }
 
@@ -204,20 +204,20 @@ auto SolidConverter::convert_impl(arg_type solid_base) -> result_type
         = type_to_converter.find(std::type_index(typeid(solid_base)));
 
     result_type result = nullptr;
-    CELER_VALIDATE(func_iter != type_to_converter.end(),
-                   << "unsupported solid type "
-                   << TypeDemangler<G4VSolid>{}(solid_base));
+    G4VG_VALIDATE(func_iter != type_to_converter.end(),
+                  << "unsupported solid type "
+                  << TypeDemangler<G4VSolid>{}(solid_base));
 
     // Call our corresponding member function to convert the solid
     ConvertFuncPtr fp = func_iter->second;
     result = (this->*fp)(solid_base);
-    if (CELER_UNLIKELY(compare_volumes_))
+    if (G4VG_UNLIKELY(compare_volumes_))
     {
-        CELER_ASSERT(result);
+        G4VG_ASSERT(result);
         this->compare_volumes(solid_base, *result);
     }
 
-    CELER_ENSURE(result);
+    G4VG_ENSURE(result);
     return result;
 }
 
@@ -324,19 +324,19 @@ auto SolidConverter::extrudedsolid(arg_type solid_base) -> result_type
     std::vector<double> z(solid.GetNofZSections());
     if (z.size() != 2)
     {
-        CELER_LOG(error) << "Extruded solid named '" << solid_base.GetName()
-                         << "' has " << z.size()
-                         << " Z sections, but VecGeom requires exactly 2";
-        CELER_ASSERT(z.size() >= 2);
+        VECGEOM_LOG(error) << "Extruded solid named '" << solid_base.GetName()
+                           << "' has " << z.size()
+                           << " Z sections, but VecGeom requires exactly 2";
+        G4VG_ASSERT(z.size() >= 2);
     }
     for (auto i : range(z.size()))
     {
         G4ExtrudedSolid::ZSection const& zsec = solid.GetZSection(i);
-        CELER_VALIDATE(zsec.fScale == 1.0,
-                       << "unsupported scale factor '" << zsec.fScale << '\'');
-        CELER_VALIDATE(zsec.fOffset.x() == 0.0 && zsec.fOffset.y() == 0.0,
-                       << "unsupported z section translation ("
-                       << zsec.fOffset.x() << "," << zsec.fOffset.y() << ")");
+        G4VG_VALIDATE(zsec.fScale == 1.0,
+                      << "unsupported scale factor '" << zsec.fScale << '\'');
+        G4VG_VALIDATE(zsec.fOffset.x() == 0.0 && zsec.fOffset.y() == 0.0,
+                      << "unsupported z section translation ("
+                      << zsec.fOffset.x() << "," << zsec.fOffset.y() << ")");
         z[i] = scale_(zsec.fZ);
     }
 
@@ -508,7 +508,7 @@ auto SolidConverter::reflectedsolid(arg_type solid_base) -> result_type
 {
     auto const& solid = dynamic_cast<G4ReflectedSolid const&>(solid_base);
     G4VSolid* underlying = solid.GetConstituentMovedSolid();
-    CELER_ASSERT(underlying);
+    G4VG_ASSERT(underlying);
     return (*this)(*underlying);
 }
 
@@ -579,7 +579,7 @@ auto SolidConverter::tet(arg_type solid_base) -> result_type
     solid.GetVertices(points[0], points[1], points[2], points[3]);
 #else
     auto g4points = solid.GetVertices();
-    CELER_ASSERT(g4points.size() == 4);
+    G4VG_ASSERT(g4points.size() == 4);
     std::copy(g4points.begin(), g4points.end(), points.begin());
 #endif
     return GeoManager::MakeInstance<UnplacedTet>(scale_(points[0]),
@@ -680,14 +680,14 @@ auto SolidConverter::convert_bool_impl(G4BooleanSolid const& bs)
     for (auto i : range(lr.size()))
     {
         G4VSolid const* solid = bs.GetConstituentSolid(i);
-        CELER_ASSERT(solid);
+        G4VG_ASSERT(solid);
 
         // Expand the possibly transformed solid into a transform
         std::unique_ptr<Transformation3D> trans;
         if (auto* displaced = dynamic_cast<G4DisplacedSolid const*>(solid))
         {
             solid = displaced->GetConstituentMovedSolid();
-            CELER_ASSERT(solid);
+            G4VG_ASSERT(solid);
             trans = std::make_unique<Transformation3D>(
                 transform_(displaced->GetTransform().Invert()));
         }
@@ -710,7 +710,7 @@ auto SolidConverter::convert_bool_impl(G4BooleanSolid const& bs)
                                          : &Transformation3D::kIdentity);
     }
 
-    CELER_ENSURE(result[0] && result[1]);
+    G4VG_ENSURE(result[0] && result[1]);
     return result;
 }
 
@@ -728,9 +728,9 @@ void SolidConverter::compare_volumes(G4VSolid const& g4,
     auto g4_cap = this->calc_capacity(g4);
     auto vg_cap = vg.Capacity();
 
-    if (CELER_UNLIKELY(!SoftEqual{0.01}(vg_cap, g4_cap)))
+    if (G4VG_UNLIKELY(!SoftEqual{0.01}(vg_cap, g4_cap)))
     {
-        CELER_LOG(warning)
+        VECGEOM_LOG(warning)
             << "Solid type '" << g4.GetEntityType()
             << "' conversion may have failed: VecGeom/G4 volume ratio is "
             << vg_cap << " / " << g4_cap << " [len^3] = " << vg_cap / g4_cap;

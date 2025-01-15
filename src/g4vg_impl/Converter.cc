@@ -55,7 +55,7 @@ struct LVMapVisitor
 
     void operator()(G4LogicalVolume const* lv)
     {
-        CELER_EXPECT(lv);
+        G4VG_EXPECT(lv);
         if (auto const* unrefl_lv = get_constituent_lv(*lv))
         {
             // Visit underlying instead of reflected
@@ -69,7 +69,7 @@ struct LVMapVisitor
         for (auto const i : range(lv->GetNoDaughters()))
         {
             G4VPhysicalVolume const* daughter{lv->GetDaughter(i)};
-            CELER_ASSERT(daughter);
+            G4VG_ASSERT(daughter);
             (*this)(daughter->GetLogicalVolume());
         }
     }
@@ -96,9 +96,9 @@ class DaughterPlacer
         , placed_pv_{placed_volumes}
         , mother_lv_{mother_lv}
     {
-        CELER_EXPECT(placed_pv_);
-        CELER_EXPECT(daughter_g4lv);
-        CELER_EXPECT(mother_lv_);
+        G4VG_EXPECT(placed_pv_);
+        G4VG_EXPECT(daughter_g4lv);
+        G4VG_EXPECT(mother_lv_);
 
         // Test for reflection
         if (G4LogicalVolume const* unrefl_g4lv
@@ -112,13 +112,13 @@ class DaughterPlacer
         }
 
         daughter_lv_ = build_vgdaughter(daughter_g4lv);
-        CELER_ENSURE(daughter_lv_);
+        G4VG_ENSURE(daughter_lv_);
     }
 
     //! Using Geant4 daughter physical volume, place the VecGeom daughter
     void operator()(G4VPhysicalVolume const* g4pv) const
     {
-        CELER_EXPECT(g4pv);
+        G4VG_EXPECT(g4pv);
 
         vecgeom::Vector3D<real_type> const reflvec{
             1, 1, static_cast<real_type>(flip_z_ ? -1 : 1)};
@@ -135,9 +135,9 @@ class DaughterPlacer
 
         // Add the newly placed daughter to the map
         auto const& daughters = mother_lv_->GetDaughters();
-        CELER_ASSERT(daughters.size() > 0);
+        G4VG_ASSERT(daughters.size() > 0);
         VGPlacedVolume const* vgpv = daughters[daughters.size() - 1];
-        CELER_ASSERT(vgpv);
+        G4VG_ASSERT(vgpv);
         auto id = vgpv->id();
         placed_pv_->resize(std::max<std::size_t>(placed_pv_->size(), id + 1),
                            nullptr);
@@ -173,11 +173,11 @@ Converter::~Converter() = default;
 //---------------------------------------------------------------------------//
 auto Converter::operator()(arg_type g4world) -> result_type
 {
-    CELER_EXPECT(g4world);
-    CELER_EXPECT(!g4world->GetRotation());
-    CELER_EXPECT(g4world->GetTranslation() == G4ThreeVector(0, 0, 0));
+    G4VG_EXPECT(g4world);
+    G4VG_EXPECT(!g4world->GetRotation());
+    G4VG_EXPECT(g4world->GetTranslation() == G4ThreeVector(0, 0, 0));
 
-    CELER_LOG(status) << "Converting Geant4 geometry";
+    VECGEOM_LOG(status) << "Converting Geant4 geometry";
     ScopedProfiling profile_this{"import-geant-geo"};
     ScopedMem record_mem("Converter.convert");
     ScopedTimeLog scoped_time;
@@ -207,9 +207,9 @@ auto Converter::operator()(arg_type g4world) -> result_type
     result.logical_volumes = convert_lv_->make_volume_map();
     result.physical_volumes = std::move(placed_volumes_);
 
-    CELER_ENSURE(result.world);
-    CELER_ENSURE(!result.logical_volumes.empty());
-    CELER_ENSURE(!result.physical_volumes.empty());
+    G4VG_ENSURE(result.world);
+    G4VG_ENSURE(!result.logical_volumes.empty());
+    G4VG_ENSURE(!result.physical_volumes.empty());
     return result;
 }
 
@@ -221,9 +221,9 @@ auto Converter::operator()(arg_type g4world) -> result_type
 auto Converter::build_with_daughters(G4LogicalVolume const* mother_g4lv)
     -> VGLogicalVolume*
 {
-    CELER_EXPECT(mother_g4lv);
+    G4VG_EXPECT(mother_g4lv);
 
-    if (CELER_UNLIKELY(options_.verbose))
+    if (G4VG_UNLIKELY(options_.verbose))
     {
         std::clog << std::string(depth_, ' ') << "Converting "
                   << mother_g4lv->GetName() << std::endl;
@@ -277,10 +277,11 @@ auto Converter::build_with_daughters(G4LogicalVolume const* mother_g4lv)
         else
         {
             TypeDemangler<G4VPhysicalVolume> demangle_pv_type;
-            CELER_LOG(error) << "Unsupported type '" << demangle_pv_type(*g4pv)
-                             << "' for physical volume '" << g4pv->GetName()
-                             << "' (corresponding LV: "
-                             << PrintableLV{g4pv->GetLogicalVolume()} << ")";
+            VECGEOM_LOG(error)
+                << "Unsupported type '" << demangle_pv_type(*g4pv)
+                << "' for physical volume '" << g4pv->GetName()
+                << "' (corresponding LV: "
+                << PrintableLV{g4pv->GetLogicalVolume()} << ")";
         }
     }
 

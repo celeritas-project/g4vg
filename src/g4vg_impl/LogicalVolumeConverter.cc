@@ -24,7 +24,7 @@ namespace g4vg
 LogicalVolumeConverter::LogicalVolumeConverter(SolidConverter& convert_solid)
     : convert_solid_(convert_solid)
 {
-    CELER_EXPECT(!vecgeom::GeoManager::Instance().IsClosed());
+    G4VG_EXPECT(!vecgeom::GeoManager::Instance().IsClosed());
 }
 
 //---------------------------------------------------------------------------//
@@ -42,7 +42,7 @@ auto LogicalVolumeConverter::operator()(arg_type lv) -> result_type
         cache_iter->second = this->construct_base(lv);
     }
 
-    CELER_ENSURE(cache_iter->second);
+    G4VG_ENSURE(cache_iter->second);
     return cache_iter->second;
 }
 
@@ -57,7 +57,7 @@ auto LogicalVolumeConverter::make_volume_map() const -> MapLvVolId
 
     for (auto const& kv : cache_)
     {
-        CELER_ASSERT(kv.second);
+        G4VG_ASSERT(kv.second);
         result.insert({kv.first, VolumeId{kv.second->id()}});
     }
     return result;
@@ -76,16 +76,16 @@ auto LogicalVolumeConverter::construct_base(arg_type g4lv) -> result_type
     }
     catch (celeritas::RuntimeError const& e)
     {
-        CELER_LOG(error) << "Failed to convert solid type '"
-                         << g4lv.GetSolid()->GetEntityType() << "' named '"
-                         << g4lv.GetSolid()->GetName()
-                         << "': " << e.details().what;
+        VECGEOM_LOG(error) << "Failed to convert solid type '"
+                           << g4lv.GetSolid()->GetEntityType() << "' named '"
+                           << g4lv.GetSolid()->GetName()
+                           << "': " << e.details().what;
         shape = this->convert_solid_.to_sphere(*g4lv.GetSolid());
-        CELER_LOG(warning)
+        VECGEOM_LOG(warning)
             << "Replaced unknown solid with sphere with capacity "
             << shape->Capacity() << " [len^3]";
-        CELER_LOG(info) << "Unsupported solid belongs to logical volume "
-                        << PrintableLV{&g4lv};
+        VECGEOM_LOG(info) << "Unsupported solid belongs to logical volume "
+                          << PrintableLV{&g4lv};
     }
 
     std::string name = g4lv.GetName();

@@ -23,7 +23,7 @@ class Scaler
     //! Construct with numeric value of 1mm in native system
     explicit Scaler(double one_mm) : scale_{one_mm}
     {
-        CELER_EXPECT(scale_ > 0);
+        G4VG_EXPECT(scale_ > 0);
     }
 
     //! Convert a positional scalar
