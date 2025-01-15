@@ -13,6 +13,7 @@
 #include <VecGeom/volumes/UnplacedVolume.h>
 
 #include "Assert.hh"
+#include "PrintableLV.hh"
 #include "SolidConverter.hh"
 
 namespace g4vg

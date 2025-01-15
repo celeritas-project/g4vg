@@ -20,6 +20,7 @@
 #include <VecGeom/volumes/PlacedVolume.h>
 
 #include "LogicalVolumeConverter.hh"
+#include "PrintableLV.hh"
 #include "Scaler.hh"
 #include "SolidConverter.hh"
 #include "Transformer.hh"
