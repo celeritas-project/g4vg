@@ -15,6 +15,7 @@
 #include "Assert.hh"
 #include "PrintableLV.hh"
 #include "SolidConverter.hh"
+#include "GDMLUtils.hh"
 
 namespace g4vg
 {
