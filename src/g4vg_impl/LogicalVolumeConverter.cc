@@ -52,15 +52,17 @@ auto LogicalVolumeConverter::operator()(arg_type lv) -> result_type
 /*!
  * Construct a mapping from G4 logical volume to logical volume ID.
  */
-auto LogicalVolumeConverter::make_volume_map() const -> MapLvVolId
+auto LogicalVolumeConverter::make_volume_map() const -> VecLv
 {
-    MapLvVolId result;
+    VecLv result;
     result.reserve(cache_.size());
 
-    for (auto const& kv : cache_)
+    for (auto&& [g4lv, lv] : cache_)
     {
-        G4VG_ASSERT(kv.second);
-        result.insert({kv.first, kv.second->id()});
+        G4VG_ASSERT(lv);
+        auto id = lv->id();
+        result.resize(std::max<std::size_t>(result.size(), id + 1), nullptr);
+        result[id] = g4lv;
     }
     return result;
 }
