@@ -175,7 +175,7 @@ class RuntimeError : public std::runtime_error
     static char const validate_err_str[];
 
     //! Underlying issue
-    std::string const& what_minimal() const;
+    std::string const& what_minimal() const { return what_; }
 
   private:
     std::string what_;
