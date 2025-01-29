@@ -4,9 +4,9 @@
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
 #-----------------------------------------------------------------------------#
 
-set(SOURCES
-)
-set(PUBLIC_DEPS VecGeom::vecgeom)
+if(BUILD_SHARED_LIBS)
+  set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+endif()
 
 #-----------------------------------------------------------------------------#
 # IMPLEMENTATION CODE
