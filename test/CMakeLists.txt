@@ -4,14 +4,14 @@
 #-----------------------------------------------------------------------------#
 
 # - Raw link test
-cuda_rdc_add_executable(g4vg_link_test G4VG.link.test.cc)
+add_executable(g4vg_link_test G4VG.link.test.cc)
 cuda_rdc_target_link_libraries(g4vg_link_test PRIVATE G4VG::g4vg)
 
 # - Primary code test
 file(TO_CMAKE_PATH "${PROJECT_SOURCE_DIR}" G4VG_SOURCE_DIR)
 configure_file(g4vg_test_config.h.in g4vg_test_config.h @ONLY)
 
-cuda_rdc_add_executable(g4vg_test
+add_executable(g4vg_test
   G4VG.test.cc
 )
 cuda_rdc_target_link_libraries(g4vg_test
