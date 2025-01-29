@@ -98,7 +98,7 @@ TEST_F(SolidsTest, default_options)
 {
     auto converted = g4vg::convert(this->g4world());
     ASSERT_TRUE(converted.world);
-    EXPECT_EQ(25, converted.logical_volumes.size());
+    EXPECT_EQ(29, converted.logical_volumes.size());
 
     // Set world in VecGeom manager
     auto& vg_manager = vecgeom::GeoManager::Instance();
