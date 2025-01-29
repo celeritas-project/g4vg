@@ -9,6 +9,7 @@
 #include <G4LogicalVolume.hh>
 #include <G4VSolid.hh>
 #include <VecGeom/management/GeoManager.h>
+#include <VecGeom/management/Logger.h>
 #include <VecGeom/volumes/LogicalVolume.h>
 #include <VecGeom/volumes/UnplacedVolume.h>
 

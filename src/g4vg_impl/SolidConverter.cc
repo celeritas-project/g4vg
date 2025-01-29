@@ -52,6 +52,7 @@
 #include <G4VSolid.hh>
 #include <G4Version.hh>
 #include <VecGeom/management/GeoManager.h>
+#include <VecGeom/management/Logger.h>
 #include <VecGeom/volumes/UnplacedAssembly.h>
 #include <VecGeom/volumes/UnplacedBooleanVolume.h>
 #include <VecGeom/volumes/UnplacedBox.h>

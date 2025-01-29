@@ -15,6 +15,7 @@
 #include <G4PVPlacement.hh>
 #include <G4ReflectionFactory.hh>
 #include <G4VPhysicalVolume.hh>
+#include <VecGeom/management/Logger.h>
 #include <VecGeom/management/ReflFactory.h>
 #include <VecGeom/volumes/LogicalVolume.h>
 #include <VecGeom/volumes/PlacedVolume.h>
