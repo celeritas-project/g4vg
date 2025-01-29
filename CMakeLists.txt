@@ -4,7 +4,12 @@
 #----------------------------------------------------------------------------#
 
 cmake_minimum_required(VERSION 3.14...3.28)
-project(G4VG VERSION 0.1.0 LANGUAGES CXX)
+
+# Set Celeritas_VERSION using git tags using the following format
+include("${CMAKE_CURRENT_LIST_DIR}/cmake/CgvFindVersion.cmake")
+cgv_find_version(G4VG)
+
+project(G4VG VERSION "${G4VG_VERSION}" LANGUAGES CXX)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
