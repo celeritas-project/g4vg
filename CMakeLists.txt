@@ -35,7 +35,8 @@ g4vg_set_default(CMAKE_CXX_EXTENSIONS OFF)
 # to declare them as-needed in g4vg itself for correct downstream use
 
 find_package(Geant4 REQUIRED)
-find_package(VecGeom REQUIRED)
+# Minimum version is 1.2.8 due to the use of VecGeom::Logger
+find_package(VecGeom 1.2.8 REQUIRED)
 
 # Celeritas *might* be coming from a superproject...
 if(G4VG_BUILD_TESTS)
