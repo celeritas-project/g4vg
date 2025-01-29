@@ -1,9 +1,39 @@
-@PACKAGE_INIT@
+#------------------------------- -*- cmake -*- -------------------------------#
+# Copyright G4VG contributors: see top-level COPYRIGHT file for details
+# SPDX-License-Identifier: (Apache-2.0 OR MIT)
+#----------------------------------------------------------------------------#
 
-# Refind dependencies in case linker needs paths to resolve
+# Set up CMAKE paths
+get_filename_component(G4VG_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" DIRECTORY)
+list(APPEND CMAKE_MODULE_PATH
+  "${G4VG_CMAKE_DIR}"
+)
+
+#-----------------------------------------------------------------------------#
+# Variables
+#-----------------------------------------------------------------------------#
+
+@G4VG_EXPORT_VARIABLES@
+
+#-----------------------------------------------------------------------------#
+# Dependencies
+#-----------------------------------------------------------------------------#
+cmake_policy(PUSH)
+cmake_policy(VERSION 3.10...3.31)
+
 include(CMakeFindDependencyMacro)
-find_dependency(Geant4)
-find_dependency(VecGeom)
 
-include("${CMAKE_CURRENT_LIST_DIR}/G4VGTargets.cmake")
+find_dependency(Geant4 @Geant4_VERSION@ REQUIRED)
+find_dependency(VecGeom @VecGeom_VERSION@ REQUIRED)
 
+cmake_policy(POP)
+
+#-----------------------------------------------------------------------------#
+# Targets
+#-----------------------------------------------------------------------------#
+
+if(NOT TARGET g4vg)
+  include("${CMAKE_CURRENT_LIST_DIR}/G4VGTargets.cmake")
+endif()
+
+#-----------------------------------------------------------------------------#

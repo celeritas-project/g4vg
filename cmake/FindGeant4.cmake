@@ -17,14 +17,6 @@ find_package(Geant4 QUIET CONFIG)
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Geant4 CONFIG_MODE)
 
-if(Geant4_FOUND AND Geant4_VERSION VERSION_GREATER_EQUAL 11 AND CELERITAS_USE_CUDA)
-  foreach(_tgt Geant4::G4global Geant4::G4global-static)
-    if(TARGET ${_tgt})
-      target_compile_features(${_tgt} INTERFACE cuda_std_17)
-    endif()
-  endforeach()
-endif()
-
 if(Geant4_VERSION VERSION_LESS 10.6)
   # Version 10.5 and older have some problems.
 
@@ -38,7 +30,7 @@ if(Geant4_VERSION VERSION_LESS 10.6)
   if(NOT TARGET "${_tgt}")
     add_library(${_tgt} INTERFACE)
     add_library(celeritas::${_tgt} ALIAS ${_tgt})
-    target_include_directories(${_tgt} INTERFACE ${Geant4_INCLUDE_DIRS})
+    target_include_directories(${_tgt} SYSTEM INTERFACE ${Geant4_INCLUDE_DIRS})
     target_compile_definitions(${_tgt} INTERFACE ${Geant4_DEFINITIONS})
     install(TARGETS ${_tgt} EXPORT celeritas-targets)
   endif()
