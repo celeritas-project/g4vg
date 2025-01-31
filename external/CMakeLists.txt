@@ -1,6 +1,5 @@
-#----------------------------------*-CMake-*----------------------------------#
-# Copyright 2024 UT-Battelle, LLC, and other Celeritas developers.
-# See the top-level COPYRIGHT file for details.
+#------------------------------- -*- cmake -*- -------------------------------#
+# Copyright Celeritas contributors: see top-level COPYRIGHT file for details
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
 #-----------------------------------------------------------------------------#
 
@@ -10,12 +9,12 @@ include(FetchContent)
 FetchContent_Declare(
   Celeritas
   EXCLUDE_FROM_ALL # see below...
-  URL https://github.com/celeritas-project/celeritas/archive/0f74ea935d72bed23b82fad98402bc68dd606d94.zip
+  URL https://github.com/celeritas-project/celeritas/archive/909e2d1136e3dd330363d60056137014daa82761.zip
 )
 
 # $ git "describe" "--tags" "--match" "v*" <hash> ->
-# v0.5.0-dev-27-g0f74ea935
-set(Celeritas_GIT_DESCRIBE "0.5.0" "-dev.27" "0f74ea935")
+# v0.5.1-6-g909e2d113
+set(Celeritas_GIT_DESCRIBE "0.5.1" "-6" "909e2d113")
 
 # Minimally build Celeritas
 g4vg_set_default(CELERITAS_BUILD_DEMOS OFF)

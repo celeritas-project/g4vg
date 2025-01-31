@@ -1,0 +1,43 @@
+Intellectual Property Notice
+----------------------------
+
+G4VG is licensed under the Apache License, Version 2.0 (LICENSE-APACHE
+or http://www.apache.org/licenses/LICENSE-2.0) or the MIT license,
+(LICENSE-MIT or http://opensource.org/licenses/MIT), at your option.
+
+Copyrights and patents in the G4VG project are retained by contributors.
+No copyright assignment is required to contribute to G4VG, but by
+submitting content in a pull request, you are confirming that you have the
+right to make your contribution to G4VG, and that if you are making your
+contribution in the course of your employment, that such contributions are
+authorized by your employer.
+
+G4VG is primarily extracted from Celeritas, which was originally developed in
+2020 by developers at Oak Ridge National Laboratory (UT-Battelle, LLC), Fermi
+National Accelerator Laboratory (Fermi Research Alliance, LLC), Argonne
+National Laboratory (UChicago Argonne, LLC), and Lawrence Berkeley National
+Laboratory (University of California).
+
+The original G4VG code was based loosely on G4VecGeomNav by S Wenzel et al.
+
+
+SPDX usage
+----------
+
+Individual files contain SPDX tags instead of the full license text.
+This enables machine processing of license information based on the SPDX
+License Identifiers that are available here: https://spdx.org/licenses/
+
+Files that are dual-licensed as Apache-2.0 OR MIT contain the following
+text in the license header:
+
+    SPDX-License-Identifier: (Apache-2.0 OR MIT)
+
+
+Software derived from external sources used in Celeritas
+--------------------------------------------------------
+
+Certain files in Celeritas are derived from external projects. The top of each
+such file contains the attribution, the license's SPDX identifier, and a link
+to the license. Full copies of the licenses are included in the online user
+documentation.

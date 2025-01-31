@@ -1,17 +1,17 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright G4VG contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file G4VG.hh
 //---------------------------------------------------------------------------//
 #pragma once
 
-#include <unordered_map>
+#include <vector>
 
 //---------------------------------------------------------------------------//
 // FORWARD DECLARATIONS
 //---------------------------------------------------------------------------//
+
 class G4LogicalVolume;
 class G4VPhysicalVolume;
 
@@ -19,9 +19,11 @@ namespace vecgeom
 {
 inline namespace cxx
 {
+class LogicalVolume;
 class VPlacedVolume;
 }  // namespace cxx
 }  // namespace vecgeom
+
 //---------------------------------------------------------------------------//
 
 namespace g4vg
@@ -38,8 +40,8 @@ struct Options
     //! Perform conversion checks
     bool compare_volumes{false};
 
-    //! TODO: allow client to use a different unit system (default: mm = 1)
-    static constexpr double scale = 1;
+    //! Value of 1mm in native unit system (0.1 for cm)
+    double scale = 1;
 };
 
 //---------------------------------------------------------------------------//
@@ -49,13 +51,16 @@ struct Options
 struct Converted
 {
     using VGPlacedVolume = vecgeom::VPlacedVolume;
-    using MapLvVolId = std::unordered_map<G4LogicalVolume const*, unsigned int>;
+    using VecLv = std::vector<G4LogicalVolume const*>;
+    using VecPv = std::vector<G4VPhysicalVolume const*>;
 
     //! World pointer (host) corresponding to input Geant4 world
     VGPlacedVolume* world{nullptr};
 
-    //! Map of Geant4 logical volumes to VecGeom LV IDs
-    MapLvVolId volumes;
+    //! Geant4 LVs indexed by VecGeom LogicalVolume ID
+    VecLv logical_volumes;
+    //! Geant4 PVs indexed by VecGeom PlacedVolume ID
+    VecPv physical_volumes;
 };
 
 //---------------------------------------------------------------------------//
@@ -63,7 +68,7 @@ struct Converted
 Converted convert(G4VPhysicalVolume const* world);
 
 // Convert with custom options
-Converted convert(G4VPhysicalVolume const* world, Options options);
+Converted convert(G4VPhysicalVolume const* world, Options const& options);
 
 //---------------------------------------------------------------------------//
 }  // namespace g4vg

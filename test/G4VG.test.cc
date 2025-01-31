@@ -1,6 +1,5 @@
-//----------------------------------*-C++-*----------------------------------//
-// Copyright 2024 UT-Battelle, LLC, and other Celeritas developers.
-// See the top-level COPYRIGHT file for details.
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright G4VG contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
 //! \file G4VG.test.cc
@@ -99,7 +98,7 @@ TEST_F(SolidsTest, default_options)
 {
     auto converted = g4vg::convert(this->g4world());
     ASSERT_TRUE(converted.world);
-    EXPECT_EQ(25, converted.volumes.size());
+    EXPECT_EQ(29, converted.logical_volumes.size());
 
     // Set world in VecGeom manager
     auto& vg_manager = vecgeom::GeoManager::Instance();
@@ -107,19 +106,17 @@ TEST_F(SolidsTest, default_options)
     vg_manager.SetWorldAndClose(converted.world);
 
     // Check volumes
-    std::vector<std::string> ordered_g4_names;
-    std::vector<double> ordered_vg_capacities;
+    std::vector<std::string> ordered_g4_names(converted.logical_volumes.size());
+    std::vector<double> ordered_vg_capacities(ordered_g4_names.size());
 
-    for (auto&& [g4lv, vgid] : converted.volumes)
+    for (std::size_t vgid = 0; vgid < ordered_g4_names.size(); ++vgid)
     {
-        if (vgid >= ordered_g4_names.size())
-        {
-            ordered_g4_names.resize(vgid + 1);
-            ordered_vg_capacities.resize(ordered_g4_names.size());
-        }
-
         // Save Geant4 name
-        ASSERT_TRUE(g4lv);
+        auto* g4lv = converted.logical_volumes[vgid];
+        if (!g4lv)
+        {
+            continue;
+        }
         std::string const& g4name = g4lv->GetName();
         ordered_g4_names[vgid] = g4name;
 

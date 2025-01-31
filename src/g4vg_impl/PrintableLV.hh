@@ -2,39 +2,41 @@
 // Copyright G4VG contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
-//! \file G4VG.cc
+//! \file g4vg_impl/PrintableLV.hh
 //---------------------------------------------------------------------------//
-#include "G4VG.hh"
+#pragma once
 
-#include "g4vg_impl/Converter.hh"
+#include <ostream>
+#include <G4LogicalVolume.hh>
 
 namespace g4vg
 {
 //---------------------------------------------------------------------------//
 /*!
- * Convert a Geant4 geometry to a VecGeom geometry.
- *
- * Return the new world volume and a mapping of Geant4 logical volumes to
- * VecGeom-based volume IDs.
+ * Wrapper around a G4LogicalVolume to get a descriptive output.
  */
-Converted convert(G4VPhysicalVolume const* world)
+struct PrintableLV
 {
-    return convert(world, {});
-}
+    G4LogicalVolume const* lv{nullptr};
+};
 
 //---------------------------------------------------------------------------//
 /*!
- * Convert with custom options.
+ * Print the logical volume name, ID, and address.
  */
-Converted convert(G4VPhysicalVolume const* world, Options const& options)
+inline std::ostream& operator<<(std::ostream& os, PrintableLV const& plv)
 {
-    using Converter = g4vg::Converter;
-
-    // Construct converter
-    Converter convert{options};
-
-    // Convert
-    return convert(world);
+    if (plv.lv)
+    {
+        os << '"' << plv.lv->GetName() << "\"@"
+           << static_cast<void const*>(plv.lv)
+           << " (ID=" << plv.lv->GetInstanceID() << ')';
+    }
+    else
+    {
+        os << "{null G4LogicalVolume}";
+    }
+    return os;
 }
 
 //---------------------------------------------------------------------------//
