@@ -209,6 +209,7 @@ TEST_F(SolidsTest, default_options)
         "ellcone1_PV",
         "genPocone1_PV",
         "xtru1_PV",
+        "World_PV",
     };
     EXPECT_EQ(expected_g4pv_names, ordered_g4_names);
 }
