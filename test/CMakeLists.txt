@@ -19,7 +19,6 @@ cuda_rdc_target_link_libraries(g4vg_test
   G4VG::g4vg # Code to be tested
   VecGeom::vecgeom # To build and check VecGeom objects
   ${Geant4_LIBRARIES} # To set up and load Geant4
-  Celeritas::geocel # To wrap geant4 exceptions
 )
 cuda_rdc_target_include_directories(g4vg_test
   PUBLIC "${PROJECT_BINARY_DIR}/test"
