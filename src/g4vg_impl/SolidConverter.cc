@@ -740,7 +740,7 @@ void SolidConverter::compare_volumes(G4VSolid const& g4,
 }
 
 //---------------------------------------------------------------------------//
-//! Calculate the capacity in native celeritas units
+//! Calculate the capacity in native units
 double SolidConverter::calc_capacity(G4VSolid const& g4) const
 {
     double const unit_scale = scale_(1.0);

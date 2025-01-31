@@ -10,7 +10,6 @@
 #include <VecGeom/management/GeoManager.h>
 #include <VecGeom/volumes/LogicalVolume.h>
 #include <VecGeom/volumes/UnplacedVolume.h>
-#include <geocel/ScopedGeantExceptionHandler.hh>
 #include <gtest/gtest.h>
 
 #include "g4vg_test_config.h"
@@ -69,7 +68,6 @@ void G4VGTestBase::SetUp()
     filename += ".gdml";
 
     // Load and strip pointers
-    celeritas::ScopedGeantExceptionHandler scope_exceptions;
     G4GDMLParser gdml_parser;
     gdml_parser.SetStripFlag(true);
     gdml_parser.Read(filename, /* validate_gdml_schema = */ false);

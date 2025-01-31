@@ -44,20 +44,8 @@ find_package(Geant4 REQUIRED)
 # Minimum version is 1.2.8 due to the use of VecGeom::Logger
 find_package(VecGeom 1.2.8 REQUIRED)
 
-# Celeritas *might* be coming from a superproject...
-if(G4VG_BUILD_TESTS)
-  if(NOT Celeritas_FOUND)
-    find_package(Celeritas QUIET)
-    if(NOT Celeritas_FOUND)
-      add_subdirectory(external)
-    endif()
-  endif()
-endif()
-
-if(NOT Celeritas_FOUND)
-  # Load CUDA RDC utils from VecGeom
-  include(CudaRdcUtils)
-endif()
+# Load CUDA RDC utils from VecGeom
+include(CudaRdcUtils)
 
 #----------------------------------------------------------------------------#
 # Add code
