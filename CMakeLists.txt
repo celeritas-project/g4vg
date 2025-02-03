@@ -40,9 +40,17 @@ g4vg_set_default(CMAKE_CXX_EXTENSIONS OFF)
 # Found here because we need the targets visible to both import Celeritas and
 # to declare them as-needed in g4vg itself for correct downstream use
 
-find_package(Geant4 REQUIRED)
+if(NOT Geant4_FOUND)
+  find_package(Geant4 REQUIRED)
+endif()
+
 # Minimum version is 1.2.8 due to the use of VecGeom::Logger
-find_package(VecGeom 1.2.8 REQUIRED)
+set(_min_vecgeom_version 1.2.8)
+if(NOT VecGeom_FOUND)
+  find_package(VecGeom ${_min_vecgeom_version} REQUIRED)
+elseif(VecGeom_VERSION VERSION_LESS _min_vecgeom_version)
+  message(SEND_ERROR "VecGeom version \"${VecGeom_VERSION}\" at \"${VecGeom_DIR}\", found by a parent project, is too old for G4VG to use: you must update to ${_min_vecgeom_version} or higher")
+endif()
 
 # Load CUDA RDC utils from VecGeom
 include(CudaRdcUtils)
