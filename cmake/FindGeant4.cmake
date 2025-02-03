@@ -32,7 +32,7 @@ if(Geant4_VERSION VERSION_LESS 10.6)
     add_library(G4VG::${_tgt} ALIAS ${_tgt})
     target_include_directories(${_tgt} SYSTEM INTERFACE ${Geant4_INCLUDE_DIRS})
     target_compile_definitions(${_tgt} INTERFACE ${Geant4_DEFINITIONS})
-    install(TARGETS ${_tgt} EXPORT celeritas-targets)
+    install(TARGETS ${_tgt} EXPORT g4vg-targets)
   endif()
   # Add the fake target to the list of geant4 libraries
   list(APPEND Geant4_LIBRARIES ${_tgt})
