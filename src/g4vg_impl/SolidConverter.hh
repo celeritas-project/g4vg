@@ -100,7 +100,7 @@ class SolidConverter
     PlacedBoolVolumes convert_bool_impl(G4BooleanSolid const&);
     // Compare volume/capacity of the solids
     void compare_volumes(G4VSolid const&, vecgeom::VUnplacedVolume const&);
-    // Calculate solid capacity in native celeritas units
+    // Calculate solid capacity in native units
     double calc_capacity(G4VSolid const&) const;
 };
 

@@ -10,7 +10,6 @@
 #include <VecGeom/management/GeoManager.h>
 #include <VecGeom/volumes/LogicalVolume.h>
 #include <VecGeom/volumes/UnplacedVolume.h>
-#include <geocel/ScopedGeantExceptionHandler.hh>
 #include <gtest/gtest.h>
 
 #include "g4vg_test_config.h"
@@ -69,7 +68,6 @@ void G4VGTestBase::SetUp()
     filename += ".gdml";
 
     // Load and strip pointers
-    celeritas::ScopedGeantExceptionHandler scope_exceptions;
     G4GDMLParser gdml_parser;
     gdml_parser.SetStripFlag(true);
     gdml_parser.Read(filename, /* validate_gdml_schema = */ false);
@@ -105,7 +103,7 @@ TEST_F(SolidsTest, default_options)
     vg_manager.RegisterPlacedVolume(converted.world);
     vg_manager.SetWorldAndClose(converted.world);
 
-    // Check volumes
+    // Check logical volumes
     std::vector<std::string> ordered_g4_names(converted.logical_volumes.size());
     std::vector<double> ordered_vg_capacities(ordered_g4_names.size());
 
@@ -135,14 +133,14 @@ TEST_F(SolidsTest, default_options)
         ordered_vg_capacities[vgid] = vguv->Capacity();
     }
 
-    std::vector<std::string> const expected_g4_names
+    std::vector<std::string> const expected_g4lv_names
         = {"box500",   "cone1",     "para1",      "sphere1",    "parabol1",
            "trap1",    "trd1",      "trd2",       "trd3",       "trd3_refl",
            "tube100",  "",          "",           "",           "",
            "boolean1", "polycone1", "genPocone1", "ellipsoid1", "tetrah1",
            "orb1",     "polyhedr1", "hype1",      "elltube1",   "ellcone1",
            "arb8b",    "arb8a",     "xtru1",      "World"};
-    EXPECT_EQ(expected_g4_names, ordered_g4_names);
+    EXPECT_EQ(expected_g4lv_names, ordered_g4_names);
 
     std::vector<double> const expected_capacities
         = {1.25e+08,    1.14982e+08, 3.36e+08,    1.13846e+08, 1.13099e+08,
@@ -156,6 +154,64 @@ TEST_F(SolidsTest, default_options)
     {
         EXPECT_NEAR(expected_capacities[i], ordered_vg_capacities[i], 1e6);
     }
+
+    // Check physical volumes
+    ordered_g4_names.assign(converted.physical_volumes.size(), {});
+
+    for (std::size_t vgid = 0; vgid < ordered_g4_names.size(); ++vgid)
+    {
+        // Save Geant4 name
+        auto* g4pv = converted.physical_volumes[vgid];
+        if (!g4pv)
+        {
+            continue;
+        }
+        std::string const& g4name = g4pv->GetName();
+        ordered_g4_names[vgid] = g4name;
+
+        // Save VecGeom name
+        auto* vgpv = vg_manager.FindPlacedVolume(vgid);
+        ASSERT_TRUE(vgpv);
+        std::string vgname{vgpv->GetName()};
+        EXPECT_EQ(0, vgname.find(g4name)) << "Expected Geant4 name '" << g4name
+                                          << "' to be at the start of "
+                                             "VecGeom name '"
+                                          << vgname << "'";
+    }
+
+    std::vector<std::string> const expected_g4pv_names = {
+        "",
+        "",
+        "",
+        "",
+        "box500_PV",
+        "cone1_PV",
+        "para1_PV",
+        "sphere1_PV",
+        "parabol1_PV",
+        "trap1_PV",
+        "trd1_PV",
+        "reflNormal",
+        "",
+        "reflected",
+        "reflected",
+        "tube100_PV",
+        "boolean1_PV",
+        "orb1_PV",
+        "polycone1_PV",
+        "hype1_PV",
+        "polyhedr1_PV",
+        "tetrah1_PV",
+        "arb8a_PV",
+        "arb8b_PV",
+        "ellipsoid1_PV",
+        "elltube1_PV",
+        "ellcone1_PV",
+        "genPocone1_PV",
+        "xtru1_PV",
+        "World_PV",
+    };
+    EXPECT_EQ(expected_g4pv_names, ordered_g4_names);
 }
 
 //---------------------------------------------------------------------------//
