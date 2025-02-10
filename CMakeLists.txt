@@ -36,6 +36,16 @@ g4vg_set_default(BUILD_TESTING ${G4VG_BUILD_TESTS})
 g4vg_set_default(CMAKE_CXX_EXTENSIONS OFF)
 
 #----------------------------------------------------------------------------#
+# Output locations for G4VG products will mirror the installation layout
+set(G4VG_CMAKE_CONFIG_DIRECTORY
+  "${PROJECT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}")
+set(G4VG_INSTALL_CMAKECONFIGDIR "${CMAKE_INSTALL_LIBDIR}/cmake/G4VG")
+set(G4VG_LIBRARY_OUTPUT_DIRECTORY
+  "${PROJECT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}")
+set(G4VG_RUNTIME_OUTPUT_DIRECTORY
+  "${PROJECT_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}")
+
+#----------------------------------------------------------------------------#
 # Dependencies
 # Found here because we need the targets visible to both import Celeritas and
 # to declare them as-needed in g4vg itself for correct downstream use
@@ -67,10 +77,6 @@ endif()
 
 #----------------------------------------------------------------------------#
 # Export CMake for installation downstream
-
-set(G4VG_CMAKE_CONFIG_DIRECTORY
-  "${PROJECT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}")
-set(G4VG_INSTALL_CMAKECONFIGDIR "${CMAKE_INSTALL_LIBDIR}/cmake/G4VG")
 
 # Build list of CMake files to install
 set(_cmake_files)
