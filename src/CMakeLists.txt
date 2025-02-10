@@ -45,10 +45,12 @@ else()
   # declare the geometry/gdml deps explicitly so that clients can pick them
   # up correctly through LINK_DEPENDENT_LIBRARIES should the linker require it.
   # See: https://discourse.cmake.org/t/use-cases-for-imported-link-dependent-libraries
-  set(_g4vg_impl_libs
-    Geant4::G4geometry${_g4_link_ext}
-    $<IF:$<TARGET_EXISTS:Geant4::G4gdml${_g4_link_ext}>,Geant4::G4gdml${_g4_link_ext},Geant4::G4persistency${_g4_link_ext}>
-  )
+  set(_g4vg_impl_libs Geant4::G4geometry${_g4_link_ext})
+  if(TARGET Geant4::G4gdml${_g4_link_ext})
+    list(APPEND _g4vg_impl_libs Geant4::G4gdml${_g4_link_ext})
+  else()
+    list(APPEND _g4vg_impl_libs Geant4::G4persistency${_g4_link_ext})
+  endif()
 endif()
 
 target_link_libraries(g4vg_impl
