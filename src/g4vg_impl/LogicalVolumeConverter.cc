@@ -24,8 +24,9 @@ namespace g4vg
 /*!
  * Construct with solid conversion helper.
  */
-LogicalVolumeConverter::LogicalVolumeConverter(SolidConverter& convert_solid)
-    : convert_solid_(convert_solid)
+LogicalVolumeConverter::LogicalVolumeConverter(SolidConverter& convert_solid,
+                                               bool append_pointers)
+    : convert_solid_(convert_solid), append_pointers_(append_pointers)
 {
     G4VG_EXPECT(!vecgeom::GeoManager::Instance().IsClosed());
 }
@@ -94,7 +95,7 @@ auto LogicalVolumeConverter::construct_base(arg_type g4lv) -> result_type
     }
 
     std::string name = g4lv.GetName();
-    if (name.find("0x") == std::string::npos)
+    if (append_pointers_ && name.find("0x") == std::string::npos)
     {
         // No pointer address: add one
         name = make_gdml_name(g4lv);
