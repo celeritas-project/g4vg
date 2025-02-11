@@ -40,6 +40,9 @@ struct Options
     //! Perform conversion checks
     bool compare_volumes{false};
 
+    //! Append pointer addresses from associated Geant4 LV
+    bool append_pointers{true};
+
     //! Value of 1mm in native unit system (0.1 for cm)
     double scale = 1;
 };

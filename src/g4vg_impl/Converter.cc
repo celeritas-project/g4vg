@@ -165,7 +165,8 @@ Converter::Converter(Options const& options)
     , convert_transform_{std::make_unique<Transformer>(*convert_scale_)}
     , convert_solid_{std::make_unique<SolidConverter>(
           *convert_scale_, *convert_transform_, options.compare_volumes)}
-    , convert_lv_{std::make_unique<LogicalVolumeConverter>(*convert_solid_)}
+    , convert_lv_{std::make_unique<LogicalVolumeConverter>(
+          *convert_solid_, options_.append_pointers)}
 {
 }
 

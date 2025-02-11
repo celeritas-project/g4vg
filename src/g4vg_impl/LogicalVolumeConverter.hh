@@ -47,7 +47,7 @@ class LogicalVolumeConverter
     //!@}
 
   public:
-    explicit LogicalVolumeConverter(SolidConverter& convert_solid);
+    LogicalVolumeConverter(SolidConverter& convert_solid, bool append_pointers);
 
     // Convert a volume
     result_type operator()(arg_type);
@@ -59,6 +59,7 @@ class LogicalVolumeConverter
     //// DATA ////
 
     SolidConverter& convert_solid_;
+    bool append_pointers_{false};
     std::unordered_map<G4LogicalVolume const*, result_type> cache_;
 
     //// HELPER FUNCTIONS ////

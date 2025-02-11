@@ -3,6 +3,9 @@
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
 #-----------------------------------------------------------------------------#
 
+# CMake-provided module for test discovery
+include(GoogleTest)
+
 # - Raw link test
 add_executable(g4vg_link_test G4VG.link.test.cc)
 cuda_rdc_target_link_libraries(g4vg_link_test PRIVATE G4VG::g4vg)
@@ -23,6 +26,9 @@ cuda_rdc_target_link_libraries(g4vg_test
 cuda_rdc_target_include_directories(g4vg_test
   PUBLIC "${PROJECT_BINARY_DIR}/test"
 )
-add_test(NAME g4vg_test COMMAND "$<TARGET_FILE:g4vg_test>")
+
+gtest_discover_tests(
+  g4vg_test
+)
 
 #-----------------------------------------------------------------------------#
