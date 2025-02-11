@@ -443,5 +443,113 @@ TEST_F(MultiLevelTest, map_reflected)
 }
 
 //---------------------------------------------------------------------------//
+class CmsMe11Test : public G4VGTestBase
+{
+  protected:
+    std::string basename() const override { return "cms-me11"; }
+
+    static TestResult base_ref();
+};
+
+TestResult CmsMe11Test::base_ref()
+{
+    TestResult ref;
+    ref.lv_name = {
+        "ME11SupportDisk",
+        "ME1RingN",
+        "ME11Space",
+        "ME11SpaceDivision",
+        "ME11",
+        "ME11AlumFrame",
+        "ME11FR4Body",
+        "ME11PolycarbPanel",
+        "ME11Layer",
+        "ME_FR4Skin_1_ME11Layer",
+        "ME_FR4Skin_2_ME11Layer",
+        "MECU_1_ME11Layer",
+        "MECU_2_ME11Layer",
+        "ME1A_ActiveGasVol",
+        "ME11_ActiveGasVol",
+        "ME11Space",
+        "ME11SpaceDivision",
+        "ME11",
+        "ME11AlumFrame",
+        "ME11FR4Body",
+        "ME11PolycarbPanel",
+        "ME11Layer",
+        "ME_FR4Skin_1_ME11Layer",
+        "ME_FR4Skin_2_ME11Layer",
+        "MECU_1_ME11Layer",
+        "MECU_2_ME11Layer",
+        "ME1A_ActiveGasVol",
+        "ME11_ActiveGasVol",
+    };
+    ref.solid_capacity = {
+        1328874842.9125609, 15679437606.654369, 3705606159.9008713,
+        205867008.88338172, 134933769,          108389421,
+        108389421,          107209672.2,        16221545.999999998,
+        589874.40000000002, 589874.40000000002, 14746.859999999999,
+        14746.859999999999, 685629.55999999982, 2711529.4500000002,
+        3705606159.9008713, 205867008.88338172, 134933769,
+        108389421,          108389421,          107209672.2,
+        16221545.999999998, 589874.40000000002, 589874.40000000002,
+        14746.859999999999, 14746.859999999999, 685629.55999999982,
+        2711529.4500000002,
+    };
+    ref.pv_name = {
+        "ME11SupportDisk",
+        "ME_FR4Skin_1_ME11Layer",
+        "ME_FR4Skin_2_ME11Layer",
+        "MECU_1_ME11Layer",
+        "MECU_2_ME11Layer",
+        "ME1A_ActiveGasVol",
+        "ME11_ActiveGasVol",
+        "ME11Layer",
+        "ME11Layer",
+        "ME11Layer",
+        "ME11Layer",
+        "ME11Layer",
+        "ME11Layer",
+        "ME11PolycarbPanel",
+        "ME11FR4Body",
+        "ME11AlumFrame",
+        "ME11",
+        "ME11SpaceDivision",
+        "ME11SpaceDivision",
+        "ME11SpaceDivision",
+        "ME11SpaceDivision",
+        "ME11SpaceDivision",
+        "ME11SpaceDivision",
+        "ME11SpaceDivision",
+        "ME11SpaceDivision",
+        "ME11SpaceDivision",
+        "ME11SpaceDivision",
+        "ME11SpaceDivision",
+        "ME11SpaceDivision",
+        "ME11SpaceDivision",
+        "ME11SpaceDivision",
+        "ME11SpaceDivision",
+        "<truncated>",
+    };
+    return ref;
+}
+
+TEST_F(CmsMe11Test, map_reflected)
+{
+    Options opts;
+    opts.append_pointers = false;
+    opts.map_reflected = true;
+    auto result = this->run(opts);
+
+    if (result.pv_name.size() > 32)
+    {
+        result.pv_name.erase(result.pv_name.begin() + 32, result.pv_name.end());
+        result.pv_name.push_back("<truncated>");
+    }
+
+    result.expect_eq(this->base_ref());
+}
+
+//---------------------------------------------------------------------------//
 }  // namespace test
 }  // namespace g4vg

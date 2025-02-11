@@ -31,6 +31,9 @@ namespace g4vg
 //---------------------------------------------------------------------------//
 /*!
  * Construction options to pass to the converter.
+ *
+ * Note: next version will change the defaults of \c append_pointers and \c
+ * map_reflected .
  */
 struct Options
 {
