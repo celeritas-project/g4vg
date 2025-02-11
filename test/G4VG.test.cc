@@ -11,12 +11,16 @@
 #include <G4RunManager.hh>
 #include <VecGeom/management/GeoManager.h>
 #include <VecGeom/volumes/LogicalVolume.h>
+#include <VecGeom/volumes/PlacedVolume.h>
 #include <VecGeom/volumes/UnplacedVolume.h>
 #include <gtest/gtest.h>
 
 #include "g4vg_test_config.h"
 
 using VGLV = vecgeom::LogicalVolume;
+using VGPV = vecgeom::VPlacedVolume;
+using std::cout;
+using std::endl;
 
 namespace g4vg
 {
@@ -25,13 +29,56 @@ namespace test
 //---------------------------------------------------------------------------//
 struct TestResult
 {
-    std::vector<std::string> lv_names;
-    std::vector<std::string> pv_names;
-    std::vector<double> capacities;
+    //! Name of the Geant4 volume corresponding to the VecGeom LV
+    std::vector<std::string> lv_name;
+    std::vector<double> solid_capacity;
+    std::vector<std::string> pv_name;
 
-    void print_expected();
+    void print_ref() const;
+    void expect_eq(TestResult const& reference) const;
 };
 
+void TestResult::print_ref() const
+{
+    // clang-format: off
+    cout << "/***** REFERENCE RESULT *****/\n"
+            "TestResult ref;\n"
+            "ref.lv_name = "
+         << testing::PrintToString(lv_name)
+         << ";\n"
+            "ref.solid_capacity = "
+         << testing::PrintToString(solid_capacity)
+         << ";\n"
+            "ref.pv_name = "
+         << testing::PrintToString(pv_name)
+         << ";\n"
+            "result.expect_eq(ref);\n"
+            "/***** END REFERENCE RESULT *****/\n";
+    // clang-format: on
+}
+
+void TestResult::expect_eq(TestResult const& ref) const
+{
+    EXPECT_EQ(lv_name, ref.lv_name);
+    ASSERT_EQ(solid_capacity.size(), ref.solid_capacity.size());
+    ASSERT_EQ(ref.lv_name.size(), ref.solid_capacity.size());
+    for (std::size_t i = 0; i != solid_capacity.size(); ++i)
+    {
+        if (ref.solid_capacity[i] == 0.0)
+        {
+            EXPECT_EQ(solid_capacity[i], 0) << "Solid for " << lv_name[i];
+            continue;
+        }
+
+        EXPECT_LT(std::fabs(solid_capacity[i] / ref.solid_capacity[i] - 1),
+                  1e-4)
+            << "Solid for " << lv_name[i] << " capacity is wrong: got "
+            << solid_capacity[i] << " but expected " << ref.solid_capacity[i];
+    }
+    EXPECT_EQ(pv_name, ref.pv_name);
+}
+
+//---------------------------------------------------------------------------//
 class G4VGTestBase : public ::testing::Test
 {
   protected:
@@ -42,8 +89,17 @@ class G4VGTestBase : public ::testing::Test
 
     G4VPhysicalVolume const* g4world() const { return world_; }
 
+    TestResult run(Options const& options)
+    {
+        TestResult result;
+        this->run_impl(options, result);
+        return result;
+    }
+
   private:
     G4VPhysicalVolume* world_{nullptr};
+
+    void run_impl(Options const& options, TestResult& result);
 };
 
 //---------------------------------------------------------------------------//
@@ -97,80 +153,52 @@ void G4VGTestBase::TearDown()
     vecgeom::GeoManager::Instance().Clear();
 }
 
-//---------------------------------------------------------------------------//
-class SolidsTest : public G4VGTestBase
+// Use a separate "void" function to test due to ASSERT_ macros
+void G4VGTestBase::run_impl(Options const& options, TestResult& result)
 {
-  protected:
-    std::string basename() const override { return "solids"; }
-};
-
-TEST_F(SolidsTest, default_options)
-{
-    auto converted = g4vg::convert(this->g4world());
+    // Convert
+    auto converted = g4vg::convert(this->g4world(), options);
     ASSERT_TRUE(converted.world);
-    EXPECT_EQ(29, converted.logical_volumes.size());
 
     // Set world in VecGeom manager
     auto& vg_manager = vecgeom::GeoManager::Instance();
     vg_manager.RegisterPlacedVolume(converted.world);
     vg_manager.SetWorldAndClose(converted.world);
 
-    // Check logical volumes
-    std::vector<std::string> ordered_g4_names(converted.logical_volumes.size());
-    std::vector<double> ordered_vg_capacities(ordered_g4_names.size());
+    // Set up result sizes
+    result.lv_name.resize(converted.logical_volumes.size());
+    result.solid_capacity.resize(result.lv_name.size());
+    result.pv_name.resize(converted.physical_volumes.size());
 
-    for (std::size_t vgid = 0; vgid < ordered_g4_names.size(); ++vgid)
+    // Process logical volumes
+    for (std::size_t vgid = 0; vgid < result.lv_name.size(); ++vgid)
     {
-        // Save Geant4 name
-        auto* g4lv = converted.logical_volumes[vgid];
-        if (!g4lv)
-        {
-            continue;
-        }
-        std::string const& g4name = g4lv->GetName();
-        ordered_g4_names[vgid] = g4name;
-
-        // Save VecGeom name
+        // Check the LV exists
         auto* vglv = vg_manager.FindLogicalVolume(vgid);
         ASSERT_TRUE(vglv);
-        std::string vgname{vglv->GetName()};
-        EXPECT_EQ(0, vgname.find(g4name)) << "Expected Geant4 name '" << g4name
-                                          << "' to be at the start of "
-                                             "VecGeom name '"
-                                          << vgname << "'";
 
-        // Check volume
+        // Save Geant4 name
+        auto* g4lv = converted.logical_volumes[vgid];
+        if (g4lv)
+        {
+            std::string const& g4name = g4lv->GetName();
+            result.lv_name[vgid] = g4name;
+
+            // Save VecGeom name
+            std::string vgname{vglv->GetName()};
+            EXPECT_EQ(0, vgname.find(g4name))
+                << "Expected Geant4 name '" << g4name
+                << "' to be at the start of VecGeom name '" << vgname << "'";
+        }
+
+        // Check solid capacity/volume
         auto* vguv = vglv->GetUnplacedVolume();
         ASSERT_TRUE(vguv);
-        ordered_vg_capacities[vgid] = vguv->Capacity();
+        result.solid_capacity[vgid] = vguv->Capacity();
     }
 
-    std::vector<std::string> const expected_g4lv_names
-        = {"box500",   "cone1",     "para1",      "sphere1",    "parabol1",
-           "trap1",    "trd1",      "trd2",       "trd3",       "trd3_refl",
-           "tube100",  "",          "",           "",           "",
-           "boolean1", "polycone1", "genPocone1", "ellipsoid1", "tetrah1",
-           "orb1",     "polyhedr1", "hype1",      "elltube1",   "ellcone1",
-           "arb8b",    "arb8a",     "xtru1",      "World"};
-    EXPECT_EQ(expected_g4lv_names, ordered_g4_names);
-
-    std::vector<double> const expected_capacities
-        = {1.25e+08,    1.14982e+08, 3.36e+08,    1.13846e+08, 1.13099e+08,
-           1.512e+08,   1.4e+08,     1.4e+08,     1.4e+08,     1.4e+08,
-           1.13097e+07, 0,           0,           0,           0,
-           1.16994e+08, 2.72926e+07, 2.08567e+08, 4.41582e+07, 1.06667e+08,
-           2.68083e+08, 2.23013e+08, 7.75367e+07, 1.50796e+08, 4.96372e+06,
-           6.81667e+08, 6.05e+08,    4.505e+06,   1.08e+11};
-    ASSERT_EQ(expected_capacities.size(), ordered_vg_capacities.size());
-    for (std::size_t i = 0; i != expected_capacities.size(); ++i)
-    {
-        EXPECT_NEAR(expected_capacities[i], ordered_vg_capacities[i], 1e6);
-    }
-
-    // Check physical volumes
-    ordered_g4_names.assign(converted.physical_volumes.size(), {});
-
-    for (std::size_t vgid = 0; vgid < ordered_g4_names.size(); ++vgid)
+    // Process physical volumes
+    for (std::size_t vgid = 0; vgid < result.pv_name.size(); ++vgid)
     {
         // Save Geant4 name
         auto* g4pv = converted.physical_volumes[vgid];
@@ -179,18 +207,70 @@ TEST_F(SolidsTest, default_options)
             continue;
         }
         std::string const& g4name = g4pv->GetName();
-        ordered_g4_names[vgid] = g4name;
+        result.pv_name[vgid] = g4name;
 
         // Save VecGeom name
-        auto* vgpv = vg_manager.FindPlacedVolume(vgid);
+        VGPV* vgpv = vg_manager.FindPlacedVolume(vgid);
         ASSERT_TRUE(vgpv);
         std::string vgname{vgpv->GetName()};
         EXPECT_EQ(0, vgname.find(g4name))
             << "Expected Geant4 name '" << g4name
             << "' to be at the start of VecGeom name '" << vgname << "'";
     }
+}
 
-    std::vector<std::string> const expected_g4pv_names = {
+//---------------------------------------------------------------------------//
+class SolidsTest : public G4VGTestBase
+{
+  protected:
+    std::string basename() const override { return "solids"; }
+
+    static TestResult base_ref();
+};
+
+TestResult SolidsTest::base_ref()
+{
+    TestResult ref;
+    ref.lv_name = {
+        "box500",   "cone1",     "para1",      "sphere1",    "parabol1",
+        "trap1",    "trd1",      "trd2",       "trd3",       "trd3_refl",
+        "tube100",  "",          "",           "",           "",
+        "boolean1", "polycone1", "genPocone1", "ellipsoid1", "tetrah1",
+        "orb1",     "polyhedr1", "hype1",      "elltube1",   "ellcone1",
+        "arb8b",    "arb8a",     "xtru1",      "World",
+    };
+    ref.solid_capacity = {
+        1.25e+08,
+        114982291.12138642,
+        3.36e+08,
+        113845922.09897856,
+        113098592.16629399,
+        1.512e+08,
+        1.4e+08,
+        1.4e+08,
+        1.4e+08,
+        1.4e+08,
+        11309733.552923255,
+        1.25e+08,
+        8e+06,
+        125000150.00006001,
+        8e+06,
+        116997640.39705618,
+        27292586.178061325,
+        208566845.61332238,
+        44158226.338858128,
+        106666666.66666667,
+        268082573.10632899,
+        223012581.98167434,
+        77536732.14828524,
+        150796447.37231007,
+        4963716.3926718729,
+        681666666.66666675,
+        6.05e+08,
+        4.505e+06,
+        108000000000,
+    };
+    ref.pv_name = {
         "",
         "",
         "",
@@ -222,7 +302,57 @@ TEST_F(SolidsTest, default_options)
         "xtru1_PV",
         "World_PV",
     };
-    EXPECT_EQ(expected_g4pv_names, ordered_g4_names);
+    return ref;
+}
+
+TEST_F(SolidsTest, default_options)
+{
+    auto result = this->run(Options{});
+    result.expect_eq(this->base_ref());
+
+    {
+        // Check that a pointer was appended
+        auto& vg_manager = vecgeom::GeoManager::Instance();
+        auto* vglv = vg_manager.FindLogicalVolume(0);
+        ASSERT_TRUE(vglv);
+        std::string name{vglv->GetName()};
+        EXPECT_EQ(0, name.find("box5000x"))
+            << "Expected pointer suffix at the end of VecGeom name '" << name
+            << "'";
+    }
+}
+
+TEST_F(SolidsTest, scale)
+{
+    Options opts;
+    opts.scale = 0.1;  // i.e., target unit system is cm
+    auto result = this->run(opts);
+
+    auto ref = this->base_ref();
+    for (auto& v : ref.solid_capacity)
+    {
+        v *= 0.001;
+    }
+    result.expect_eq(ref);
+}
+
+TEST_F(SolidsTest, no_pointers)
+{
+    Options opts;
+    opts.append_pointers = false;
+    auto result = this->run(opts);
+
+    auto ref = this->base_ref();
+    result.expect_eq(ref);
+
+    {
+        // Check that pointers were not appended
+        auto& vg_manager = vecgeom::GeoManager::Instance();
+        auto* vglv = vg_manager.FindLogicalVolume(0);
+        ASSERT_TRUE(vglv);
+        std::string name{vglv->GetName()};
+        EXPECT_EQ("box500", name);
+    }
 }
 
 //---------------------------------------------------------------------------//
