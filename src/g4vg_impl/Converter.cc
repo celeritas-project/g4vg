@@ -53,15 +53,19 @@ build_transform(Transformer const& convert, G4VPhysicalVolume const& g4pv)
 //! Add all visited logical volumes to a set.
 struct LVMapVisitor
 {
+    bool map_reflected{false};
     std::unordered_set<G4LogicalVolume const*>* all_lv;
 
     void operator()(G4LogicalVolume const* lv)
     {
         G4VG_EXPECT(lv);
-        if (auto const* unrefl_lv = get_constituent_lv(*lv))
+        if (!map_reflected)
         {
-            // Visit underlying instead of reflected
-            return (*this)(unrefl_lv);
+            if (auto const* unrefl_lv = get_constituent_lv(*lv))
+            {
+                // Visit underlying instead of reflected
+                return (*this)(unrefl_lv);
+            }
         }
 
         // Add this LV
@@ -186,7 +190,8 @@ auto Converter::operator()(arg_type g4world) -> result_type
     // Recurse through physical volumes once to build underlying LV
     std::unordered_set<G4LogicalVolume const*> all_g4lv;
     all_g4lv.reserve(G4LogicalVolumeStore::GetInstance()->size());
-    LVMapVisitor{&all_g4lv}(g4world->GetLogicalVolume());
+    LVMapVisitor{options_.map_reflected,
+                 &all_g4lv}(g4world->GetLogicalVolume());
 
     // Convert visited volumes in instance order to try to approximate layout
     // of Geant4

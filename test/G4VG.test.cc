@@ -411,6 +411,37 @@ TEST_F(MultiLevelTest, default_options)
     result.expect_eq(this->base_ref());
 }
 
+TEST_F(MultiLevelTest, map_reflected)
+{
+    Options opts;
+    opts.append_pointers = false;
+    opts.map_reflected = true;
+    auto result = this->run(opts);
+
+    auto ref = this->base_ref();
+    ref.lv_name = {
+        "sph",
+        "tri",
+        "box",
+        "box2",
+        "tri_refl",
+        "world",
+        "box_refl",
+        "sph_refl",
+    };
+    ref.solid_capacity = {
+        33510.321638291127,
+        20784.609690826528,
+        3.375e+06,
+        3.375e+06,
+        20784.609690826528,
+        1.10592e+08,
+        3.375e+06,
+        33510.321638291127,
+    };
+    result.expect_eq(ref);
+}
+
 //---------------------------------------------------------------------------//
 }  // namespace test
 }  // namespace g4vg
