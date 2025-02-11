@@ -356,5 +356,61 @@ TEST_F(SolidsTest, no_pointers)
 }
 
 //---------------------------------------------------------------------------//
+class MultiLevelTest : public G4VGTestBase
+{
+  protected:
+    std::string basename() const override { return "multi-level"; }
+
+    static TestResult base_ref();
+};
+
+TestResult MultiLevelTest::base_ref()
+{
+    TestResult ref;
+    ref.lv_name = {
+        "sph",
+        "tri",
+        "box",
+        "box2",
+        "world",
+    };
+    ref.solid_capacity = {
+        33510.321638291127,
+        20784.609690826528,
+        3.375e+06,
+        3.375e+06,
+        1.10592e+08,
+    };
+    ref.pv_name = {
+        "topsph1",
+        "boxsph1",
+        "boxsph2",
+        "boxtri",
+        "topbox1",
+        "boxsph1",
+        "boxsph2",
+        "",
+        "boxtri",
+        "topbox2",
+        "topbox3",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "topbox4",
+        "world_PV",
+    };
+    return ref;
+}
+
+TEST_F(MultiLevelTest, default_options)
+{
+    auto result = this->run(Options{});
+    // result.print_ref();
+    result.expect_eq(this->base_ref());
+}
+
+//---------------------------------------------------------------------------//
 }  // namespace test
 }  // namespace g4vg
