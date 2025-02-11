@@ -78,6 +78,12 @@ cuda_rdc_target_include_directories(g4vg
 add_library(G4VG::g4vg ALIAS g4vg)
 target_compile_features(g4vg PUBLIC cxx_std_11)
 
+cuda_rdc_set_target_properties(g4vg
+  PROPERTIES
+  ARCHIVE_OUTPUT_DIRECTORY "${G4VG_LIBRARY_OUTPUT_DIRECTORY}"
+  LIBRARY_OUTPUT_DIRECTORY "${G4VG_LIBRARY_OUTPUT_DIRECTORY}"
+)
+
 # Install all targets to lib/
 install(TARGETS g4vg
   EXPORT g4vg-targets
