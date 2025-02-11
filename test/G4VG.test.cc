@@ -7,6 +7,8 @@
 #include "G4VG.hh"
 
 #include <G4GDMLParser.hh>
+#include <G4Material.hh>
+#include <G4RunManager.hh>
 #include <VecGeom/management/GeoManager.h>
 #include <VecGeom/volumes/LogicalVolume.h>
 #include <VecGeom/volumes/UnplacedVolume.h>
@@ -21,6 +23,14 @@ namespace g4vg
 namespace test
 {
 //---------------------------------------------------------------------------//
+struct TestResult
+{
+    std::vector<std::string> lv_names;
+    std::vector<std::string> pv_names;
+    std::vector<double> capacities;
+
+    void print_expected();
+};
 
 class G4VGTestBase : public ::testing::Test
 {
@@ -48,15 +58,17 @@ void G4VGTestBase::SetUp()
 
     if (!loaded_basename.empty())
     {
-        if (this_basename != loaded_basename)
+        if (this_basename == loaded_basename)
         {
-            GTEST_SKIP() << "Cannot run two separate geometries in the same "
-                            "execution: loaded "
-                         << loaded_basename << " but this geometry is "
-                         << this_basename;
+            // Otherwise the loaded file matches the current one; exit early
+            return;
         }
-        // Otherwise the loaded file matches the current one; exit early
-        return;
+        else
+        {
+            // Reset geometry and materials
+            G4RunManager::GetRunManager()->ReinitializeGeometry();
+            G4Material::GetMaterialTable()->clear();
+        }
     }
     // Set the basename to a temporary value in case something goes wrong
     loaded_basename = "<FAILURE>";
@@ -173,10 +185,9 @@ TEST_F(SolidsTest, default_options)
         auto* vgpv = vg_manager.FindPlacedVolume(vgid);
         ASSERT_TRUE(vgpv);
         std::string vgname{vgpv->GetName()};
-        EXPECT_EQ(0, vgname.find(g4name)) << "Expected Geant4 name '" << g4name
-                                          << "' to be at the start of "
-                                             "VecGeom name '"
-                                          << vgname << "'";
+        EXPECT_EQ(0, vgname.find(g4name))
+            << "Expected Geant4 name '" << g4name
+            << "' to be at the start of VecGeom name '" << vgname << "'";
     }
 
     std::vector<std::string> const expected_g4pv_names = {
