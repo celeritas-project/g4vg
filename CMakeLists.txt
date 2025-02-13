@@ -36,6 +36,20 @@ g4vg_set_default(BUILD_TESTING ${G4VG_BUILD_TESTS})
 g4vg_set_default(BUILD_SHARED_LIBS ON)
 g4vg_set_default(CMAKE_CXX_EXTENSIONS OFF)
 
+if(BUILD_SHARED_LIBS)
+  # Inform installed binaries of internal library rpaths
+  g4vg_set_default(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_FULL_LIBDIR}")
+  # Do not relink libs/binaries when dependent shared libs change
+  g4vg_set_default(CMAKE_LINK_DEPENDS_NO_SHARED ON)
+endif()
+
+# When developing add checking for proper usage of `install(`
+if(G4VG_DEBUG)
+  g4vg_set_default(CMAKE_ERROR_ON_ABSOLUTE_INSTALL_DESTINATION ON)
+endif()
+# Avoid printing details about already installed files
+g4vg_set_default(CMAKE_INSTALL_MESSAGE LAZY)
+
 #----------------------------------------------------------------------------#
 # Output locations for G4VG products will mirror the installation layout
 set(G4VG_CMAKE_CONFIG_DIRECTORY
