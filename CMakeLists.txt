@@ -33,6 +33,7 @@ option(G4VG_BUILD_TESTS "Build G4VG unit tests" OFF)
 option(G4VG_DEBUG "Add runtime assertions" ON)
 g4vg_set_default(BUILD_TESTING ${G4VG_BUILD_TESTS})
 
+g4vg_set_default(BUILD_SHARED_LIBS ON)
 g4vg_set_default(CMAKE_CXX_EXTENSIONS OFF)
 
 #----------------------------------------------------------------------------#
