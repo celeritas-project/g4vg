@@ -46,8 +46,8 @@ struct Options
     //! Append pointer addresses from associated Geant4 LV
     bool append_pointers{true};
 
-    //! Map VecGeom to the "_refl"-suffixed logical volumes
-    bool map_reflected{false};
+    //! Use reflection factory for backward compatibility (Celeritas)
+    bool reflection_factory{true};
 
     //! Value of 1mm in native unit system (0.1 for cm)
     double scale = 1;

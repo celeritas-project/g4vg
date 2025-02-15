@@ -53,13 +53,13 @@ build_transform(Transformer const& convert, G4VPhysicalVolume const& g4pv)
 //! Add all visited logical volumes to a set.
 struct LVMapVisitor
 {
-    bool map_reflected{false};
+    bool reflection_factory{true};
     std::unordered_set<G4LogicalVolume const*>* all_lv;
 
     void operator()(G4LogicalVolume const* lv)
     {
         G4VG_EXPECT(lv);
-        if (!map_reflected)
+        if (reflection_factory)
         {
             if (auto const* unrefl_lv = get_constituent_lv(*lv))
             {
@@ -95,11 +95,13 @@ class DaughterPlacer
 
     template<class F>
     DaughterPlacer(F&& build_vgdaughter,
+                   bool reflection_factory,
                    Transformer const& trans,
                    VecPv* placed_volumes,
                    G4LogicalVolume const* daughter_g4lv,
                    VGLogicalVolume* mother_lv)
-        : convert_transform_{trans}
+        : reflection_factory_{reflection_factory}
+        , convert_transform_{trans}
         , placed_pv_{placed_volumes}
         , mother_lv_{mother_lv}
     {
@@ -108,14 +110,17 @@ class DaughterPlacer
         G4VG_EXPECT(mother_lv_);
 
         // Test for reflection
-        if (G4LogicalVolume const* unrefl_g4lv
-            = get_constituent_lv(*daughter_g4lv))
+        if (reflection_factory_)
         {
-            // Replace with constituent volume, and flip the Z scale
-            // See G4ReflectionFactory::CheckScale: the reflection value is
-            // hard coded to {1, 1, -1}
-            daughter_g4lv = unrefl_g4lv;
-            flip_z_ = true;
+            if (G4LogicalVolume const* unrefl_g4lv
+                = get_constituent_lv(*daughter_g4lv))
+            {
+                // Replace with constituent volume, and flip the Z scale
+                // See G4ReflectionFactory::CheckScale: the reflection value is
+                // hard coded to {1, 1, -1}
+                daughter_g4lv = unrefl_g4lv;
+                flip_z_ = true;
+            }
         }
 
         daughter_lv_ = build_vgdaughter(daughter_g4lv);
@@ -127,23 +132,38 @@ class DaughterPlacer
     {
         G4VG_EXPECT(g4pv);
 
-        vecgeom::Vector3D<double> const reflvec{
-            1, 1, static_cast<double>(flip_z_ ? -1 : 1)};
+        VGPlacedVolume const* vgpv = nullptr;
+        if (reflection_factory_)
+        {
+            vecgeom::Vector3D<double> const reflvec{
+                1, 1, static_cast<double>(flip_z_ ? -1 : 1)};
 
-        // Use the VGDML reflection factory to place the daughter in the
-        // mother (it must *always* be used, in case parent is reflected)
-        vecgeom::ReflFactory::Instance().Place(
-            build_transform(convert_transform_, *g4pv),
-            reflvec,
-            g4pv->GetName(),
-            daughter_lv_,
-            mother_lv_,
-            g4pv->GetCopyNo());
+            // Use the VGDML reflection factory to place the daughter in the
+            // mother (it must *always* be used, in case parent is reflected)
+            vecgeom::ReflFactory::Instance().Place(
+                build_transform(convert_transform_, *g4pv),
+                reflvec,
+                g4pv->GetName(),
+                daughter_lv_,
+                mother_lv_,
+                g4pv->GetCopyNo());
+
+            auto const& daughters = mother_lv_->GetDaughters();
+            G4VG_ASSERT(daughters.size() > 0);
+            vgpv = daughters[daughters.size() - 1];
+        }
+        else
+        {
+            auto transform = build_transform(convert_transform_, *g4pv);
+            auto* placed
+                = daughter_lv_->Place(g4pv->GetName().c_str(), &transform);
+            G4VG_ASSERT(placed);
+            placed->SetCopyNo(g4pv->GetCopyNo());
+            mother_lv_->PlaceDaughter(placed);
+            vgpv = placed;
+        }
 
         // Add the newly placed daughter to the map
-        auto const& daughters = mother_lv_->GetDaughters();
-        G4VG_ASSERT(daughters.size() > 0);
-        VGPlacedVolume const* vgpv = daughters[daughters.size() - 1];
         G4VG_ASSERT(vgpv);
         auto id = vgpv->id();
         placed_pv_->resize(std::max<std::size_t>(placed_pv_->size(), id + 1),
@@ -152,6 +172,7 @@ class DaughterPlacer
     }
 
   private:
+    bool reflection_factory_;
     Transformer const& convert_transform_;
     Converter::VecPv* placed_pv_{nullptr};
     VGLogicalVolume* mother_lv_{nullptr};
@@ -190,7 +211,7 @@ auto Converter::operator()(arg_type g4world) -> result_type
     // Recurse through physical volumes once to build underlying LV
     std::unordered_set<G4LogicalVolume const*> all_g4lv;
     all_g4lv.reserve(G4LogicalVolumeStore::GetInstance()->size());
-    LVMapVisitor{options_.map_reflected,
+    LVMapVisitor{options_.reflection_factory,
                  &all_g4lv}(g4world->GetLogicalVolume());
 
     // Convert visited volumes in instance order to try to approximate layout
@@ -262,6 +283,7 @@ auto Converter::build_with_daughters(G4LogicalVolume const* mother_g4lv)
         G4VPhysicalVolume* g4pv = mother_g4lv->GetDaughter(i);
 
         DaughterPlacer place_daughter(convert_daughter,
+                                      options_.reflection_factory,
                                       *convert_transform_,
                                       &placed_volumes_,
                                       g4pv->GetLogicalVolume(),

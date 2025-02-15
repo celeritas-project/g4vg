@@ -406,14 +406,14 @@ TEST_F(MultiLevelTest, default_options)
     result.expect_eq(this->base_ref());
 }
 
-TEST_F(MultiLevelTest, map_reflected)
+TEST_F(MultiLevelTest, no_refl_factory)
 {
     Options opts;
     opts.append_pointers = false;
-    opts.map_reflected = true;
+    opts.reflection_factory = false;
     auto result = this->run(opts);
 
-    auto ref = this->base_ref();
+    TestResult ref;
     ref.lv_name = {
         "sph",
         "tri",
@@ -433,6 +433,24 @@ TEST_F(MultiLevelTest, map_reflected)
         1.10592e+08,
         3.375e+06,
         33510.321638291127,
+    };
+    // Erase empty PV names from reference
+    ref.pv_name = {
+        "topsph1",
+        "boxsph1",
+        "boxsph2",
+        "boxtri",
+        "topbox1",
+        "boxsph1",
+        "boxsph2",
+        "boxtri",
+        "topbox2",
+        "topbox3",
+        "boxsph1",
+        "boxsph2",
+        "boxtri",
+        "topbox4",
+        "world_PV",
     };
     result.expect_eq(ref);
 }
@@ -471,22 +489,19 @@ TestResult CmsEeBackDeeTest::base_ref()
         "EEBackPlate",
         "EESRing",
         "EEBackQuad",
-        "",
-        "",
-        "",
-        "",
-        "",
+        "EEBackPlate",
+        "EESRing",
         "EEBackQuad",
         "EEBackDee_PV",
     };
     return ref;
 }
 
-TEST_F(CmsEeBackDeeTest, map_reflected)
+TEST_F(CmsEeBackDeeTest, no_refl_factory)
 {
     Options opts;
     opts.append_pointers = false;
-    opts.map_reflected = true;
+    opts.reflection_factory = false;
     auto result = this->run(opts);
 
     if (result.pv_name.size() > 32)
