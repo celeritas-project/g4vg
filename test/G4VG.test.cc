@@ -6,7 +6,6 @@
 //---------------------------------------------------------------------------//
 #include "G4VG.hh"
 
-#include <G4GDMLParser.hh>
 #include <G4Material.hh>
 #include <G4RunManager.hh>
 #include <VecGeom/management/GeoManager.h>
@@ -15,6 +14,7 @@
 #include <VecGeom/volumes/UnplacedVolume.h>
 #include <gtest/gtest.h>
 
+#include "LoadGdml.hh"
 #include "g4vg_test_config.h"
 
 using VGLV = vecgeom::LogicalVolume;
@@ -135,13 +135,8 @@ void G4VGTestBase::SetUp()
     filename += this_basename;
     filename += ".gdml";
 
-    // Load and strip pointers
-    G4GDMLParser gdml_parser;
-    gdml_parser.SetStripFlag(true);
-    gdml_parser.Read(filename, /* validate_gdml_schema = */ false);
-
     // Save world volume
-    world_ = gdml_parser.GetWorldVolume();
+    world_ = load_gdml(filename);
     ASSERT_TRUE(world_) << "GDML parser did not return world volume";
 
     // Save the basename
@@ -443,98 +438,51 @@ TEST_F(MultiLevelTest, map_reflected)
 }
 
 //---------------------------------------------------------------------------//
-class CmsMe11Test : public G4VGTestBase
+class CmsEeBackDeeTest : public G4VGTestBase
 {
   protected:
-    std::string basename() const override { return "cms-me11"; }
+    std::string basename() const override { return "cms-ee-back-dee"; }
 
     static TestResult base_ref();
 };
 
-TestResult CmsMe11Test::base_ref()
+TestResult CmsEeBackDeeTest::base_ref()
 {
     TestResult ref;
     ref.lv_name = {
-        "ME11SupportDisk",
-        "ME1RingN",
-        "ME11Space",
-        "ME11SpaceDivision",
-        "ME11",
-        "ME11AlumFrame",
-        "ME11FR4Body",
-        "ME11PolycarbPanel",
-        "ME11Layer",
-        "ME_FR4Skin_1_ME11Layer",
-        "ME_FR4Skin_2_ME11Layer",
-        "MECU_1_ME11Layer",
-        "MECU_2_ME11Layer",
-        "ME1A_ActiveGasVol",
-        "ME11_ActiveGasVol",
-        "ME11Space",
-        "ME11SpaceDivision",
-        "ME11",
-        "ME11AlumFrame",
-        "ME11FR4Body",
-        "ME11PolycarbPanel",
-        "ME11Layer",
-        "ME_FR4Skin_1_ME11Layer",
-        "ME_FR4Skin_2_ME11Layer",
-        "MECU_1_ME11Layer",
-        "MECU_2_ME11Layer",
-        "ME1A_ActiveGasVol",
-        "ME11_ActiveGasVol",
+        "EEBackPlate",
+        "EESRing",
+        "EEBackQuad",
+        "EEBackDee",
+        "EEBackQuad_refl",
+        "EEBackPlate_refl",
+        "EESRing_refl",
     };
     ref.solid_capacity = {
-        1328874842.9125609, 15679437606.654369, 3705606159.9008713,
-        205867008.88338172, 134933769,          108389421,
-        108389421,          107209672.2,        16221545.999999998,
-        589874.40000000002, 589874.40000000002, 14746.859999999999,
-        14746.859999999999, 685629.55999999982, 2711529.4500000002,
-        3705606159.9008713, 205867008.88338172, 134933769,
-        108389421,          108389421,          107209672.2,
-        16221545.999999998, 589874.40000000002, 589874.40000000002,
-        14746.859999999999, 14746.859999999999, 685629.55999999982,
-        2711529.4500000002,
+        132703256.27150133,
+        29960299.032288227,
+        929420652.20822978,
+        1858841304.4164596,
+        929420652.20822978,
+        132703256.27150133,
+        29960299.032288227,
     };
     ref.pv_name = {
-        "ME11SupportDisk",
-        "ME_FR4Skin_1_ME11Layer",
-        "ME_FR4Skin_2_ME11Layer",
-        "MECU_1_ME11Layer",
-        "MECU_2_ME11Layer",
-        "ME1A_ActiveGasVol",
-        "ME11_ActiveGasVol",
-        "ME11Layer",
-        "ME11Layer",
-        "ME11Layer",
-        "ME11Layer",
-        "ME11Layer",
-        "ME11Layer",
-        "ME11PolycarbPanel",
-        "ME11FR4Body",
-        "ME11AlumFrame",
-        "ME11",
-        "ME11SpaceDivision",
-        "ME11SpaceDivision",
-        "ME11SpaceDivision",
-        "ME11SpaceDivision",
-        "ME11SpaceDivision",
-        "ME11SpaceDivision",
-        "ME11SpaceDivision",
-        "ME11SpaceDivision",
-        "ME11SpaceDivision",
-        "ME11SpaceDivision",
-        "ME11SpaceDivision",
-        "ME11SpaceDivision",
-        "ME11SpaceDivision",
-        "ME11SpaceDivision",
-        "ME11SpaceDivision",
-        "<truncated>",
+        "EEBackPlate",
+        "EESRing",
+        "EEBackQuad",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "EEBackQuad",
+        "EEBackDee_PV",
     };
     return ref;
 }
 
-TEST_F(CmsMe11Test, map_reflected)
+TEST_F(CmsEeBackDeeTest, map_reflected)
 {
     Options opts;
     opts.append_pointers = false;
