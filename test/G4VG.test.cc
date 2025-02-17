@@ -66,7 +66,14 @@ void TestResult::expect_eq(TestResult const& ref) const
     {
         if (ref.solid_capacity[i] == 0.0)
         {
-            EXPECT_EQ(solid_capacity[i], 0) << "Solid for " << lv_name[i];
+            EXPECT_EQ(solid_capacity[i], 0)
+                << "Solid for " << i << " = " << lv_name[i];
+            continue;
+        }
+        else if (solid_capacity[i] == 0.0)
+        {
+            ADD_FAILURE() << "Got zero capacity for " << i << " = "
+                          << lv_name[i];
             continue;
         }
 
@@ -171,6 +178,7 @@ void G4VGTestBase::run_impl(Options const& options, TestResult& result)
         // Check the LV exists
         auto* vglv = vg_manager.FindLogicalVolume(vgid);
         ASSERT_TRUE(vglv);
+        std::string vgname{vglv->GetName()};
 
         // Save Geant4 name
         auto* g4lv = converted.logical_volumes[vgid];
@@ -180,10 +188,14 @@ void G4VGTestBase::run_impl(Options const& options, TestResult& result)
             result.lv_name[vgid] = g4name;
 
             // Save VecGeom name
-            std::string vgname{vglv->GetName()};
             EXPECT_EQ(0, vgname.find(g4name))
                 << "Expected Geant4 name '" << g4name
                 << "' to be at the start of VecGeom name '" << vgname << "'";
+        }
+        else if (vgname.find("[TEMP]") == 0)
+        {
+            // Don't add capacity for temporary volumes
+            continue;
         }
 
         // Check solid capacity/volume
@@ -246,10 +258,10 @@ TestResult SolidsTest::base_ref()
         1.4e+08,
         1.4e+08,
         11309733.552923255,
-        1.25e+08,
-        8e+06,
-        125000150.00006001,
-        8e+06,
+        0,
+        0,
+        0,
+        0,
         116997640.39705618,
         27292586.178061325,
         208566845.61332238,
@@ -320,6 +332,7 @@ TEST_F(SolidsTest, default_options)
 TEST_F(SolidsTest, scale)
 {
     Options opts;
+    opts.compare_volumes = true;
     opts.scale = 0.1;  // i.e., target unit system is cm
     auto result = this->run(opts);
 
@@ -334,6 +347,7 @@ TEST_F(SolidsTest, scale)
 TEST_F(SolidsTest, no_pointers)
 {
     Options opts;
+    opts.compare_volumes = true;
     opts.append_pointers = false;
     auto result = this->run(opts);
 
@@ -411,6 +425,7 @@ TEST_F(MultiLevelTest, no_refl_factory)
     Options opts;
     opts.append_pointers = false;
     opts.reflection_factory = false;
+    opts.compare_volumes = true;
     auto result = this->run(opts);
 
     TestResult ref;
@@ -502,14 +517,9 @@ TEST_F(CmsEeBackDeeTest, no_refl_factory)
     Options opts;
     opts.append_pointers = false;
     opts.reflection_factory = false;
+    opts.verbose = true;
+    opts.compare_volumes = true;
     auto result = this->run(opts);
-
-    if (result.pv_name.size() > 32)
-    {
-        result.pv_name.erase(result.pv_name.begin() + 32, result.pv_name.end());
-        result.pv_name.push_back("<truncated>");
-    }
-
     result.expect_eq(this->base_ref());
 }
 
