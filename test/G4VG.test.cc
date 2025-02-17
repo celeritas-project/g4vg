@@ -168,12 +168,12 @@ void G4VGTestBase::run_impl(Options const& options, TestResult& result)
     vg_manager.SetWorldAndClose(converted.world);
 
     // Set up result sizes
-    result.lv_name.resize(converted.logical_volumes.size());
-    result.solid_capacity.resize(result.lv_name.size());
-    result.pv_name.resize(converted.physical_volumes.size());
+    result.lv_name.reserve(converted.logical_volumes.size());
+    result.solid_capacity.reserve(converted.logical_volumes.size());
+    result.pv_name.reserve(converted.physical_volumes.size());
 
     // Process logical volumes
-    for (std::size_t vgid = 0; vgid < result.lv_name.size(); ++vgid)
+    for (std::size_t vgid = 0; vgid < converted.logical_volumes.size(); ++vgid)
     {
         // Check the LV exists
         auto* vglv = vg_manager.FindLogicalVolume(vgid);
@@ -185,7 +185,7 @@ void G4VGTestBase::run_impl(Options const& options, TestResult& result)
         if (g4lv)
         {
             std::string const& g4name = g4lv->GetName();
-            result.lv_name[vgid] = g4name;
+            result.lv_name.push_back(g4name);
 
             // Save VecGeom name
             EXPECT_EQ(0, vgname.find(g4name))
@@ -201,11 +201,11 @@ void G4VGTestBase::run_impl(Options const& options, TestResult& result)
         // Check solid capacity/volume
         auto* vguv = vglv->GetUnplacedVolume();
         ASSERT_TRUE(vguv);
-        result.solid_capacity[vgid] = vguv->Capacity();
+        result.solid_capacity.push_back(vguv->Capacity());
     }
 
     // Process physical volumes
-    for (std::size_t vgid = 0; vgid < result.pv_name.size(); ++vgid)
+    for (std::size_t vgid = 0; vgid < converted.physical_volumes.size(); ++vgid)
     {
         // Save Geant4 name
         auto* g4pv = converted.physical_volumes[vgid];
@@ -214,7 +214,7 @@ void G4VGTestBase::run_impl(Options const& options, TestResult& result)
             continue;
         }
         std::string const& g4name = g4pv->GetName();
-        result.pv_name[vgid] = g4name;
+        result.pv_name.push_back(g4name);
 
         // Save VecGeom name
         VGPV* vgpv = vg_manager.FindPlacedVolume(vgid);
@@ -239,12 +239,11 @@ TestResult SolidsTest::base_ref()
 {
     TestResult ref;
     ref.lv_name = {
-        "box500",   "cone1",     "para1",      "sphere1",    "parabol1",
-        "trap1",    "trd1",      "trd2",       "trd3",       "trd3_refl",
-        "tube100",  "",          "",           "",           "",
-        "boolean1", "polycone1", "genPocone1", "ellipsoid1", "tetrah1",
-        "orb1",     "polyhedr1", "hype1",      "elltube1",   "ellcone1",
-        "arb8b",    "arb8a",     "xtru1",      "World",
+        "box500",   "cone1",    "para1",     "sphere1",    "parabol1",
+        "trap1",    "trd1",     "trd2",      "trd3",       "trd3_refl",
+        "tube100",  "boolean1", "polycone1", "genPocone1", "ellipsoid1",
+        "tetrah1",  "orb1",     "polyhedr1", "hype1",      "elltube1",
+        "ellcone1", "arb8b",    "arb8a",     "xtru1",      "World",
     };
     ref.solid_capacity = {
         1.25e+08,
@@ -258,10 +257,6 @@ TestResult SolidsTest::base_ref()
         1.4e+08,
         1.4e+08,
         11309733.552923255,
-        0,
-        0,
-        0,
-        0,
         116997640.39705618,
         27292586.178061325,
         208566845.61332238,
@@ -278,35 +273,12 @@ TestResult SolidsTest::base_ref()
         108000000000,
     };
     ref.pv_name = {
-        "",
-        "",
-        "",
-        "",
-        "box500_PV",
-        "cone1_PV",
-        "para1_PV",
-        "sphere1_PV",
-        "parabol1_PV",
-        "trap1_PV",
-        "trd1_PV",
-        "reflNormal",
-        "",
-        "reflected",
-        "reflected",
-        "tube100_PV",
-        "boolean1_PV",
-        "orb1_PV",
-        "polycone1_PV",
-        "hype1_PV",
-        "polyhedr1_PV",
-        "tetrah1_PV",
-        "arb8a_PV",
-        "arb8b_PV",
-        "ellipsoid1_PV",
-        "elltube1_PV",
-        "ellcone1_PV",
-        "genPocone1_PV",
-        "xtru1_PV",
+        "box500_PV",   "cone1_PV",     "para1_PV",      "sphere1_PV",
+        "parabol1_PV", "trap1_PV",     "trd1_PV",       "reflNormal",
+        "reflected",   "reflected",    "tube100_PV",    "boolean1_PV",
+        "orb1_PV",     "polycone1_PV", "hype1_PV",      "polyhedr1_PV",
+        "tetrah1_PV",  "arb8a_PV",     "arb8b_PV",      "ellipsoid1_PV",
+        "elltube1_PV", "ellcone1_PV",  "genPocone1_PV", "xtru1_PV",
         "World_PV",
     };
     return ref;
@@ -398,15 +370,9 @@ TestResult MultiLevelTest::base_ref()
         "topbox1",
         "boxsph1",
         "boxsph2",
-        "",
         "boxtri",
         "topbox2",
         "topbox3",
-        "",
-        "",
-        "",
-        "",
-        "",
         "topbox4",
         "world_PV",
     };
@@ -429,9 +395,6 @@ TEST_F(MultiLevelTest, no_refl_factory)
 
     TestResult ref;
     ref.lv_name = {
-        "",
-        "",
-        "",
         "sph",
         "tri",
         "box",
@@ -442,9 +405,6 @@ TEST_F(MultiLevelTest, no_refl_factory)
         "sph_refl",
     };
     ref.solid_capacity = {
-        0,
-        0,
-        0,
         33510.321638291127,
         20784.609690826528,
         3.375e+06,
@@ -455,9 +415,6 @@ TEST_F(MultiLevelTest, no_refl_factory)
         -33510.321638291127,
     };
     ref.pv_name = {
-        "",
-        "",
-        "",
         "topsph1",
         "boxsph1",
         "boxsph2",
@@ -490,9 +447,6 @@ TestResult CmsEeBackDeeTest::base_ref()
 {
     TestResult ref;
     ref.lv_name = {
-        "",
-        "",
-        "",
         "EEBackPlate",
         "EESRing",
         "EEBackQuad",
@@ -502,9 +456,6 @@ TestResult CmsEeBackDeeTest::base_ref()
         "EESRing_refl",
     };
     ref.solid_capacity = {
-        0,
-        0,
-        0,
         132703256.27150133,
         29960299.032288227,
         929420652.20822978,
@@ -514,9 +465,6 @@ TestResult CmsEeBackDeeTest::base_ref()
         -29960299.032288227,
     };
     ref.pv_name = {
-        "",
-        "",
-        "",
         "EEBackPlate",
         "EESRing",
         "EEBackQuad",
