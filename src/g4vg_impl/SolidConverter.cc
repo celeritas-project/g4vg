@@ -323,13 +323,10 @@ auto SolidConverter::extrudedsolid(arg_type solid_base) -> result_type
 
     // Convert Z sections
     std::vector<double> z(solid.GetNofZSections());
-    if (z.size() != 2)
-    {
-        VECGEOM_LOG(error) << "Extruded solid named '" << solid_base.GetName()
+    G4VG_VALIDATE(z.size() == 2,
+                  << "Extruded solid named '" << solid_base.GetName()
                            << "' has " << z.size()
-                           << " Z sections, but VecGeom requires exactly 2";
-        G4VG_ASSERT(z.size() >= 2);
-    }
+                  << " Z sections, but VecGeom requires exactly 2");
     for (std::size_t i = 0; i < z.size(); ++i)
     {
         G4ExtrudedSolid::ZSection const& zsec = solid.GetZSection(i);
