@@ -325,7 +325,7 @@ auto SolidConverter::extrudedsolid(arg_type solid_base) -> result_type
     std::vector<double> z(solid.GetNofZSections());
     G4VG_VALIDATE(z.size() == 2,
                   << "Extruded solid named '" << solid_base.GetName()
-                           << "' has " << z.size()
+                  << "' has " << z.size()
                   << " Z sections, but VecGeom requires exactly 2");
     for (std::size_t i = 0; i < z.size(); ++i)
     {
@@ -507,7 +507,22 @@ auto SolidConverter::reflectedsolid(arg_type solid_base) -> result_type
     auto const& solid = dynamic_cast<G4ReflectedSolid const&>(solid_base);
     G4VSolid* underlying = solid.GetConstituentMovedSolid();
     G4VG_ASSERT(underlying);
-    return (*this)(*underlying);
+
+    // Convert unreflected solid
+    VUnplacedVolume const* converted = (*this)(*underlying);
+
+    // Like the boolean solids, UnplacedScaledShape requires a logical volume
+    // under the hood
+    std::ostringstream label;
+    label << "[TEMP]@" << solid.GetName() << "/refl";
+
+    // Create temporary LV from converted solid
+    auto* temp_lv = new LogicalVolume(label.str().c_str(), converted);
+    // Place the transformed LV
+    VPlacedVolume const* temp_placed
+        = temp_lv->Place(&Transformation3D::kIdentity);
+
+    return GeoManager::MakeInstance<UnplacedScaledShape>(temp_placed, 1, 1, -1);
 }
 
 //---------------------------------------------------------------------------//
@@ -717,6 +732,7 @@ auto SolidConverter::convert_bool_impl(G4BooleanSolid const& bs)
 void SolidConverter::compare_volumes(G4VSolid const& g4,
                                      vecgeom::VUnplacedVolume const& vg)
 {
+
     if (dynamic_cast<G4BooleanSolid const*>(&g4))
     {
         // Skip comparison of boolean solids because volumes are stochastic
@@ -724,7 +740,8 @@ void SolidConverter::compare_volumes(G4VSolid const& g4,
     }
 
     auto g4_cap = this->calc_capacity(g4);
-    auto vg_cap = vg.Capacity();
+    // NOTE: reflected solids result in negative capacity
+    auto vg_cap = std::fabs(vg.Capacity());
 
     if (G4VG_UNLIKELY(
             !(std::fabs(vg_cap - g4_cap) < 0.01 * std::max(vg_cap, g4_cap))))
