@@ -1,20 +1,19 @@
 #------------------------------- -*- cmake -*- -------------------------------#
-# Copyright Celeritas contributors: see top-level COPYRIGHT file for details
+# Copyright Celeritas contributors, for more details see:
+#   https://github.com/celeritas-project/celeritas/blob/develop/COPYRIGHT
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
 #[=======================================================================[.rst:
 
 CudaRdcUtils
 ------------
 
-From Celeritas v0.5.0.
-
 CMake utility functions for building and linking libraries containing CUDA
 relocatable device code and most importantly linking against those libraries.
 
 .. command:: cuda_rdc_add_library
 
-  Add a library to the project using the specified source files *with* special handling
-  for the case where the library contains CUDA relocatable device code.
+  Add a library to the project using the specified source files *with* special
+  handling for the case where the library contains CUDA relocatable device code.
 
   ::
 
@@ -22,26 +21,29 @@ relocatable device code and most importantly linking against those libraries.
             [EXCLUDE_FROM_ALL]
             [<source>...])
 
-  To support CUDA relocatable device code, the following 4 targets will be constructed:
+  To support CUDA relocatable device code, the following 4 targets will be
+  constructed:
 
-  - A object library used to compile the source code and share the result with the static and shared library
+  - A object library used to compile the source code and share the result with
+    the static and shared library
   - A static library used as input to ``nvcc -dlink``
   - A shared “intermediary” library containing all the ``.o`` files but NO ``nvcc -dlink`` result
   - A shared “final” library containing the result of ``nvcc -dlink`` and linked against the "intermediary" shared library.
 
-  An executable needs to load exactly one result of ``nvcc -dlink`` whose input needs to be
-  the ``.o`` files from all the CUDA libraries it uses/depends-on. So if the executable has CUDA code,
-  it will call ``nvcc -dlink`` itself and link against the "intermediary" shared libraries.
-  If the executable has no CUDA code, then it needs to link against the "final" library
-  (of its most derived dependency). If the executable has no CUDA code but uses more than one
+  An executable needs to load exactly one result of ``nvcc -dlink`` whose input
+  needs to be the ``.o`` files from all the CUDA libraries it uses/depends-on.
+  So if the executable has CUDA code, it will call ``nvcc -dlink`` itself and
+  link against the "intermediary" shared libraries.  If the executable has no
+  CUDA code, then it needs to link against the "final" library (of its most
+  derived dependency). If the executable has no CUDA code but uses more than one
   CUDA library, it will still need to run its own ``nvcc -dlink`` step.
 
 
 .. command:: cuda_rdc_target_link_libraries
 
-  Specify libraries or flags to use when linking a given target and/or its dependents, taking
-  in account the extra targets (see cuda_rdc_add_library) needed to support CUDA relocatable
-  device code.
+  Specify libraries or flags to use when linking a given target and/or its
+  dependents, taking in account the extra targets (see cuda_rdc_add_library)
+  needed to support CUDA relocatable device code.
 
     ::
 
@@ -49,9 +51,10 @@ relocatable device code and most importantly linking against those libraries.
         <PRIVATE|PUBLIC|INTERFACE> <item>...
         [<PRIVATE|PUBLIC|INTERFACE> <item>...]...))
 
-  Usage requirements from linked library targets will be propagated to all four targets. Usage requirements
-  of a target's dependencies affect compilation of its own sources. In the case that ``<target>`` does
-  not contain CUDA code, the command decays to ``target_link_libraries``.
+  Usage requirements from linked library targets will be propagated to all four
+  targets. Usage requirements of a target's dependencies affect compilation of
+  its own sources. In the case that ``<target>`` does not contain CUDA code, the
+  command decays to ``target_link_libraries``.
 
   See ``target_link_libraries`` for additional detail.
 
@@ -66,12 +69,13 @@ relocatable device code and most importantly linking against those libraries.
         <INTERFACE|PUBLIC|PRIVATE> [items1...]
         [<INTERFACE|PUBLIC|PRIVATE> [items2...] ...])
 
-  Specifies include directories to use when compiling a given target. The named <target>
-  must have been created by a command such as cuda_rdc_add_library(), add_executable() or add_library(),
-  and can be used with an ALIAS target. It is aware of the 4 underlying targets (objects, static,
-  middle, final) present when the input target was created cuda_rdc_add_library() and will propagate
-  the include directories to all four. In the case that ``<target>`` does not contain CUDA code,
-  the command decays to ``target_include_directories``.
+  Specifies include directories to use when compiling a given target. The named
+  <target> must have been created by a command such as cuda_rdc_add_library(),
+  add_executable() or add_library(), and can be used with an ALIAS target. It is
+  aware of the 4 underlying targets (objects, static, middle, final) present
+  when the input target was created cuda_rdc_add_library() and will propagate
+  the include directories to all four. In the case that ``<target>`` does not
+  contain CUDA code, the command decays to ``target_include_directories``.
 
   See ``target_include_directories`` for additional detail.
 
@@ -120,6 +124,10 @@ relocatable device code and most importantly linking against those libraries.
 
 include_guard(GLOBAL)
 
+cmake_policy(VERSION 3.24...3.31)
+# 3.19 is needed for set properties in INTERFACE libraries.
+# 3.24 is needed to be able to mark the final library as always `-Wl,-no-as-needed`
+
 #-----------------------------------------------------------------------------#
 
 define_property(TARGET PROPERTY CUDA_RDC_LIBRARY_TYPE
@@ -142,6 +150,35 @@ define_property(TARGET PROPERTY CUDA_RDC_OBJECT_LIBRARY
   BRIEF_DOCS "Name of the object (without nvlink step) library corresponding to this cuda library"
   FULL_DOCS "Name of the object (without nvlink step) library corresponding to this cuda library"
 )
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  # This is necessary on platform that default to calling ld with --as-needed
+  # (we are looking at you Ubuntu) but also in case user as explicitly using it.
+
+  # This is used for the final libraries because of the following:
+  #   * userlib_with_rdc.so has undefined symbols found in userlib_with_rdc_final (the result of nvlink)
+  #   * userlib_with_rdc_final.so requires the userlib_with_rdc’s object files as input to nvlink
+  #   * userlib_with_rdc_final.so also requires userlib_with_rdc.so for user's code.
+  #   * user executable requires userlib_with_rdc.so due to direct dependencies.
+  # So the link line order to produce the user executable as to be:
+  #   .... userlib_with_rdc_final.so userlib_with_rdc.so
+  # But userlib_with_rdc_final.so does not contains any symbol that is explicit used in the
+  # user executable.  Consequently, if the linker is in the `--as-needed` mode it will drop
+  # userlib_with_rdc_final.so.  However, it will then not be able to be used to resolve
+  # the missing symbol needed by userlib_with_rdc.so
+
+  # This implementation requires CMake version 3.24 or higher.  For more details see:
+  #   https://cmake.org/cmake/help/latest/variable/CMAKE_LINK_LIBRARY_USING_FEATURE.html
+  set(CMAKE_CXX_LINK_LIBRARY_USING_rdc_no_as_needed_SUPPORTED TRUE CACHE INTERNAL "")
+  set(CMAKE_CXX_LINK_LIBRARY_USING_rdc_no_as_needed
+    "LINKER:--push-state,--no-as-needed"
+    "<LINK_ITEM>"
+    "LINKER:--pop-state"
+    CACHE INTERNAL ""
+  )
+else()
+  set(CMAKE_CXX_LINK_LIBRARY_USING_no_as_needed_SUPPORTED FALSE)
+endif()
 
 ##############################################################################
 # Separate the OPTIONS out from the sources
@@ -476,7 +513,7 @@ endfunction()
 # the 4 libraries (objects, static, middle, final) libraries needed
 # for a separatable CUDA library
 function(cuda_rdc_target_compile_options target)
-  if(NOT CMAKE_CUDA_COMPILER)
+  if(NOT CELERITAS_USE_CUDA)
     target_compile_options(${ARGV})
     return()
   endif()
@@ -604,11 +641,22 @@ function(cuda_rdc_use_middle_lib_in_property target property)
   set(_new_values)
   foreach(_lib ${_target_libs})
     set(_newlib ${_lib})
+    # Simplistic treatement of `$<LINK_ONLY:...>`
+    string(REGEX REPLACE "\\\$<LINK_ONLY:(.*)>" "\\1" _stripped_lib ${_lib})
+    if(_stripped_lib STREQUAL _lib)
+      set(_stripped_lib)
+    else()
+      set(_lib ${_stripped_lib})
+    endif()
     if(TARGET ${_lib})
       cuda_rdc_strip_alias(_lib ${_lib})
       cuda_rdc_get_library_middle_target(_libmid ${_lib})
       if(_libmid)
-        set(_newlib ${_libmid})
+        if(_stripped_lib)
+          set(_newlib "$<LINK_ONLY:${_libmid}>")
+        else()
+          set(_newlib ${_libmid})
+        endif()
       endif()
     endif()
     list(APPEND _new_values ${_newlib})
@@ -772,7 +820,7 @@ function(cuda_rdc_target_link_libraries target)
         # Note: we might be able to move this to cuda_rdc_target_link_libraries
         CUDA_RESOLVE_DEVICE_SYMBOLS OFF
       )
-      get_target_property(_final_target_type ${target} TYPE)
+      get_target_property(_final_target_type ${_finallibs} TYPE)
 
       get_target_property(_final_runtime ${_finallibs} CUDA_RUNTIME_LIBRARY)
       if(_final_runtime STREQUAL "Shared")
@@ -793,7 +841,7 @@ function(cuda_rdc_target_link_libraries target)
         #     if(ARGV1 MATCHES "^(PRIVATE|PUBLIC|INTERFACE)$")
         # or simply keep the following:
         get_target_property(_current_link_libraries ${target} LINK_LIBRARIES)
-        set_property(TARGET ${target} PROPERTY LINK_LIBRARIES ${_current_link_libraries} ${_finallibs} )
+        set_property(TARGET ${target} PROPERTY LINK_LIBRARIES ${_current_link_libraries} "$<LINK_LIBRARY:rdc_no_as_needed,${_finallibs}>" )
       endif()
     elseif(${_final_count} GREATER 1)
       # turn into CUDA executable.
@@ -926,25 +974,31 @@ function(cuda_rdc_cuda_gather_dependencies outlist target)
   endif()
   cuda_rdc_strip_alias(target ${target})
   get_target_property(_target_type ${target} TYPE)
+  set(_deplist)
   if(NOT _target_type STREQUAL "INTERFACE_LIBRARY")
     get_target_property(_target_link_libraries ${target} LINK_LIBRARIES)
     if(_target_link_libraries)
       foreach(_lib ${_target_link_libraries})
         cuda_rdc_strip_alias(_lib ${_lib})
+        set(_libmid)
         if(TARGET ${_lib})
           cuda_rdc_get_library_middle_target(_libmid ${_lib})
         endif()
         if(TARGET ${_libmid})
-          list(APPEND ${outlist} ${_libmid})
+          list(APPEND _deplist ${_libmid})
         endif()
         # and recurse
+        set(_midlist)
+        set(_before ${_midlist})
         cuda_rdc_cuda_gather_dependencies(_midlist ${_lib})
-        list(APPEND ${outlist} ${_midlist})
+        list(APPEND _deplist ${_midlist})
       endforeach()
     endif()
   endif()
+  list(REMOVE_DUPLICATES _deplist)
+  list(APPEND ${outlist} ${_deplist})
   list(REMOVE_DUPLICATES ${outlist})
-  set_target_properties(${target} PROPERTIES CUDA_RDC_CACHED_LIB_DEPENDENCIES "${${outlist}}")
+  set_target_properties(${target} PROPERTIES CUDA_RDC_CACHED_LIB_DEPENDENCIES "${_deplist}")
   set(${outlist} ${${outlist}} PARENT_SCOPE)
 endfunction()
 
