@@ -416,7 +416,6 @@ TestResult MultiLevelTest::base_ref()
 TEST_F(MultiLevelTest, default_options)
 {
     auto result = this->run(Options{});
-    // result.print_ref();
     result.expect_eq(this->base_ref());
 }
 
@@ -430,6 +429,9 @@ TEST_F(MultiLevelTest, no_refl_factory)
 
     TestResult ref;
     ref.lv_name = {
+        "",
+        "",
+        "",
         "sph",
         "tri",
         "box",
@@ -440,17 +442,22 @@ TEST_F(MultiLevelTest, no_refl_factory)
         "sph_refl",
     };
     ref.solid_capacity = {
+        0,
+        0,
+        0,
         33510.321638291127,
         20784.609690826528,
         3.375e+06,
         3.375e+06,
-        20784.609690826528,
+        -20784.609690826528,
         1.10592e+08,
-        3.375e+06,
-        33510.321638291127,
+        -3.375e+06,
+        -33510.321638291127,
     };
-    // Erase empty PV names from reference
     ref.pv_name = {
+        "",
+        "",
+        "",
         "topsph1",
         "boxsph1",
         "boxsph2",
@@ -483,6 +490,9 @@ TestResult CmsEeBackDeeTest::base_ref()
 {
     TestResult ref;
     ref.lv_name = {
+        "",
+        "",
+        "",
         "EEBackPlate",
         "EESRing",
         "EEBackQuad",
@@ -492,15 +502,21 @@ TestResult CmsEeBackDeeTest::base_ref()
         "EESRing_refl",
     };
     ref.solid_capacity = {
+        0,
+        0,
+        0,
         132703256.27150133,
         29960299.032288227,
         929420652.20822978,
         1858841304.4164596,
-        929420652.20822978,
-        132703256.27150133,
-        29960299.032288227,
+        -929420652.20822978,
+        -132703256.27150133,
+        -29960299.032288227,
     };
     ref.pv_name = {
+        "",
+        "",
+        "",
         "EEBackPlate",
         "EESRing",
         "EEBackQuad",

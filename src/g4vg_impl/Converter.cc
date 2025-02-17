@@ -214,6 +214,27 @@ auto Converter::operator()(arg_type g4world) -> result_type
     LVMapVisitor{options_.reflection_factory,
                  &all_g4lv}(g4world->GetLogicalVolume());
 
+    if (!options_.reflection_factory)
+    {
+        // New construction order: convert solids first so that we can get
+        // "fake" LV/PV construction out of the way
+        for (auto* lv : *G4LogicalVolumeStore::GetInstance())
+        {
+            if (all_g4lv.count(lv))
+            {
+                try
+                {
+                    (*convert_solid_)(*lv->GetSolid());
+                }
+                catch (g4vg::RuntimeError const&)
+                {
+                    // Let the error show up during the actual LV construction
+                    continue;
+                }
+            }
+        }
+    }
+
     // Convert visited volumes in instance order to try to approximate layout
     // of Geant4
     for (auto* lv : *G4LogicalVolumeStore::GetInstance())
