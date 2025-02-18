@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<gdml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://service-spi.web.cern.ch/service-spi/app/releases/GDML/schema/gdml.xsd">
+
+  <define/>
+
+  <solids>
+    <orb lunit="mm" name="sph" r="20"/>
+    <polyhedra name="tri" aunit="deg" deltaphi="360" lunit="mm" numsides="3" startphi="30">
+      <zplane rmax="10" rmin="0" z="-20"/>
+      <zplane rmax="10" rmin="0" z="20"/>
+    </polyhedra>
+    <box lunit="mm" name="box" x="150" y="150" z="150"/>
+    <box lunit="mm" name="worldbox" x="480" y="480" z="480"/>
+  </solids>
+
+  <structure>
+    <volume name="sph">
+      <solidref ref="sph"/>
+      <auxiliary auxtype="SensDet" auxvalue="sph_sd"/>
+    </volume>
+    <volume name="tri">
+      <solidref ref="tri"/>
+      <physvol name="trisph">
+      </physvol>
+    </volume>
+    <volume name="box">
+      <solidref ref="box"/>
+      <physvol copynumber="31" name="boxsph1">
+        <volumeref ref="sph"/>
+        <position name="bs1_pos" unit="mm" x="25.0" y="25.0" z="0.0"/>
+      </physvol>
+      <physvol copynumber="32" name="boxsph2">
+        <volumeref ref="sph"/>
+        <position name="bs2_pos" unit="mm" x="-25.0" y="-25.0" z="0.0"/>
+      </physvol>
+      <physvol copynumber="1" name="boxtri">
+        <volumeref ref="tri"/>
+        <position name="bt_pos" unit="mm" x="25.0" y="-25.0" z="0.0"/>
+      </physvol>
+    </volume>
+    <volume name="box2">
+      <solidref ref="box"/>
+      <physvol copynumber="41" name="boxsph1">
+        <volumeref ref="sph"/>
+        <position name="b2s1_pos" unit="mm" x="25.0" y="25.0" z="0.0"/>
+      </physvol>
+      <physvol copynumber="42" name="boxsph2">
+        <volumeref ref="sph"/>
+        <position name="b2s2_pos" unit="mm" x="-25.0" y="-25.0" z="0.0"/>
+      </physvol>
+      <physvol copynumber="11" name="boxtri">
+        <volumeref ref="tri"/>
+        <position name="b2t_pos" unit="mm" x="25.0" y="-25.0" z="0.0"/>
+        <scale name="b2t_refl" x="1" y="-1" z="1"/>
+      </physvol>
+    </volume>
+    <volume name="world">
+      <solidref ref="worldbox"/>
+      <physvol copynumber="0" name="topsph1">
+        <volumeref ref="sph"/>
+        <position name="ts1_pos" unit="mm" x="0.0" y="0.0" z="0.0"/>
+      </physvol>
+      <physvol copynumber="21" name="topbox1">
+        <volumeref ref="box"/>
+        <position name="tb1_pos" unit="mm" x="100.0" y="100.0" z="0.0"/>
+      </physvol>
+      <physvol copynumber="22" name="topbox2">
+        <volumeref ref="box2"/>
+        <position name="tb2_pos" unit="mm" x="-100.0" y="100.0" z="0.0"/>
+      </physvol>
+      <physvol copynumber="23" name="topbox3">
+        <volumeref ref="box"/>
+        <position name="tb3_pos" unit="mm" x="-100.0" y="-100.0" z="0.0"/>
+        <rotation name="tb3_rot" unit="deg" x="0" y="0" z="90"/>
+      </physvol>
+      <physvol copynumber="24" name="topbox4">
+        <volumeref ref="box"/>
+        <position name="tb4_pos" unit="mm" x="100.0" y="-100.0" z="0.0"/>
+        <scale name="tb4_refl" x="1" y="-1" z="1"/>
+      </physvol>
+    </volume>
+  </structure>
+
+  <setup name="Default" version="1.0">
+    <world ref="world"/>
+  </setup>
+
+</gdml>

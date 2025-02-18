@@ -31,6 +31,9 @@ namespace g4vg
 //---------------------------------------------------------------------------//
 /*!
  * Construction options to pass to the converter.
+ *
+ * Note: next version will change the defaults of \c append_pointers and \c
+ * map_reflected .
  */
 struct Options
 {
@@ -42,6 +45,9 @@ struct Options
 
     //! Append pointer addresses from associated Geant4 LV
     bool append_pointers{true};
+
+    //! Use reflection factory for backward compatibility (Celeritas)
+    bool reflection_factory{true};
 
     //! Value of 1mm in native unit system (0.1 for cm)
     double scale = 1;
