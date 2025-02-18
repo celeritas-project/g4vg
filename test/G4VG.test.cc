@@ -391,6 +391,7 @@ TEST_F(MultiLevelTest, no_refl_factory)
     opts.append_pointers = false;
     opts.reflection_factory = false;
     opts.compare_volumes = true;
+    opts.verbose = true;
     auto result = this->run(opts);
 
     TestResult ref;
