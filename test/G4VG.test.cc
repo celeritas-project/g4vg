@@ -15,6 +15,7 @@
 #include <gtest/gtest.h>
 
 #include "LoadGdml.hh"
+#include "Repr.hh"
 #include "g4vg_test_config.h"
 
 using VGLV = vecgeom::LogicalVolume;
@@ -33,6 +34,7 @@ struct TestResult
     std::vector<std::string> lv_name;
     std::vector<double> solid_capacity;
     std::vector<std::string> pv_name;
+    std::vector<int> copy_no;
 
     void print_ref() const;
     void expect_eq(TestResult const& reference) const;
@@ -44,13 +46,16 @@ void TestResult::print_ref() const
     cout << "/***** REFERENCE RESULT *****/\n"
             "TestResult ref;\n"
             "ref.lv_name = "
-         << testing::PrintToString(lv_name)
+         << repr(lv_name)
          << ";\n"
             "ref.solid_capacity = "
-         << testing::PrintToString(solid_capacity)
+         << repr(solid_capacity)
          << ";\n"
             "ref.pv_name = "
-         << testing::PrintToString(pv_name)
+         << repr(pv_name)
+         << ";\n"
+            "ref.copy_no = "
+         << repr(copy_no)
          << ";\n"
             "result.expect_eq(ref);\n"
             "/***** END REFERENCE RESULT *****/\n";
@@ -82,7 +87,8 @@ void TestResult::expect_eq(TestResult const& ref) const
             << "Solid for " << lv_name[i] << " capacity is wrong: got "
             << solid_capacity[i] << " but expected " << ref.solid_capacity[i];
     }
-    EXPECT_EQ(pv_name, ref.pv_name);
+    EXPECT_EQ(pv_name, ref.pv_name) << repr(pv_name);
+    EXPECT_EQ(copy_no, ref.copy_no) << repr(copy_no);
 }
 
 //---------------------------------------------------------------------------//
@@ -171,6 +177,7 @@ void G4VGTestBase::run_impl(Options const& options, TestResult& result)
     result.lv_name.reserve(converted.logical_volumes.size());
     result.solid_capacity.reserve(converted.logical_volumes.size());
     result.pv_name.reserve(converted.physical_volumes.size());
+    result.copy_no.reserve(converted.physical_volumes.size());
 
     // Process logical volumes
     for (std::size_t vgid = 0; vgid < converted.logical_volumes.size(); ++vgid)
@@ -216,13 +223,17 @@ void G4VGTestBase::run_impl(Options const& options, TestResult& result)
         std::string const& g4name = g4pv->GetName();
         result.pv_name.push_back(g4name);
 
-        // Save VecGeom name
+        // Check VecGeom name
         VGPV* vgpv = vg_manager.FindPlacedVolume(vgid);
         ASSERT_TRUE(vgpv);
         std::string vgname{vgpv->GetName()};
         EXPECT_EQ(0, vgname.find(g4name))
             << "Expected Geant4 name '" << g4name
             << "' to be at the start of VecGeom name '" << vgname << "'";
+
+        // Save VecGeom copy number (may differ from single G4 volume if it's a
+        // "stamped" instance of a replica/parameterised volume)
+        result.copy_no.push_back(vgpv->GetCopyNo());
     }
 }
 
@@ -281,6 +292,7 @@ TestResult SolidsTest::base_ref()
         "elltube1_PV", "ellcone1_PV",  "genPocone1_PV", "xtru1_PV",
         "World_PV",
     };
+    ref.copy_no = std::vector<int>(ref.pv_name.size(), 0);
     return ref;
 }
 
@@ -376,6 +388,7 @@ TestResult MultiLevelTest::base_ref()
         "topbox4",
         "world_PV",
     };
+    ref.copy_no = {0, 31, 32, 1, 21, 41, 42, 11, 22, 23, 24, 0};
     return ref;
 }
 
@@ -394,7 +407,7 @@ TEST_F(MultiLevelTest, no_refl_factory)
     opts.verbose = true;
     auto result = this->run(opts);
 
-    TestResult ref;
+    auto ref = this->base_ref();
     ref.lv_name = {
         "sph",
         "tri",
@@ -432,6 +445,7 @@ TEST_F(MultiLevelTest, no_refl_factory)
         "topbox4",
         "world_PV",
     };
+    ref.copy_no = {0, 31, 32, 1, 21, 41, 42, 11, 22, 23, 31, 32, 1, 24, 0};
     result.expect_eq(ref);
 }
 
@@ -473,6 +487,15 @@ TestResult CmsEeBackDeeTest::base_ref()
         "EESRing",
         "EEBackQuad",
         "EEBackDee_PV",
+    };
+    ref.copy_no = {
+        1,
+        1,
+        1,
+        1,
+        1,
+        2,
+        0,
     };
     return ref;
 }
@@ -566,6 +589,17 @@ TestResult ReplicaTest::base_ref()
     ref.pv_name.push_back("fSecondArmPhys");
     ref.pv_name.push_back("worldLogical_PV");
 
+    ref.copy_no = {
+        0,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 0,  0,
+        1,  2,  3,  4,  0,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12,
+        13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 0,  0,  1,  2,  3,  4,
+        0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+        0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+        0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+        0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+        0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  2,  3,  4,  5,  6,  7,
+        8,  9,  10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 0,  1,  0,  1,  2,  3,
+        4,  5,  6,  7,  8,  9,  0,  0,  0};
     return ref;
 }
 
