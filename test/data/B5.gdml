@@ -779,7 +779,7 @@
         <position name="HadCalorimeterPhysical0x157178650_pos" unit="mm" x="0" y="0" z="3000"/>
       </physvol>
     </volume>
-    <volume name="worldLogical0x1571743d0">
+    <volume name="worldLogical">
       <materialref ref="G4_AIR0x15716fd60"/>
       <solidref ref="worldBox0x157173ff0"/>
       <physvol name="magneticPhysical0x157174ea0">
@@ -799,7 +799,7 @@
   </structure>
 
   <setup name="Default" version="1.0">
-    <world ref="worldLogical0x1571743d0"/>
+    <world ref="worldLogical"/>
   </setup>
 
 </gdml>
