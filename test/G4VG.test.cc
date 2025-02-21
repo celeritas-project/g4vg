@@ -610,5 +610,74 @@ TEST_F(ReplicaTest, default_options)
 }
 
 //---------------------------------------------------------------------------//
+class ZnenvTest : public G4VGTestBase
+{
+  protected:
+    std::string basename() const override { return "znenv"; }
+
+    static TestResult base_ref();
+};
+
+TestResult ZnenvTest::base_ref()
+{
+    TestResult ref;
+    ref.lv_name = {
+        "ZNF1",
+        "ZNG1",
+        "ZNF2",
+        "ZNG2",
+        "ZNF3",
+        "ZNG3",
+        "ZNF4",
+        "ZNG4",
+        "ZNST",
+        "ZNSL",
+        "ZN1",
+        "ZNTX",
+        "ZNEU",
+        "ZNENV",
+        "World",
+    };
+    ref.solid_capacity = {
+        104.634670318625,
+        360,
+        104.634670318625,
+        360,
+        104.634670318625,
+        360,
+        104.634670318625,
+        360,
+        10240,
+        112640,
+        1239040,
+        2478080,
+        4956160,
+        5252243.52,
+        2000000000,
+    };
+    ref.pv_name = {
+        "ZNF1_1",   "ZNG1_1",  "ZNF2_1",  "ZNG2_1",  "ZNF3_1",  "ZNG3_1",
+        "ZNF4_1",   "ZNG4_1",  "ZNST_PV", "ZNST_PV", "ZNST_PV", "ZNST_PV",
+        "ZNST_PV",  "ZNST_PV", "ZNST_PV", "ZNST_PV", "ZNST_PV", "ZNST_PV",
+        "ZNST_PV",  "ZNSL_PV", "ZNSL_PV", "ZNSL_PV", "ZNSL_PV", "ZNSL_PV",
+        "ZNSL_PV",  "ZNSL_PV", "ZNSL_PV", "ZNSL_PV", "ZNSL_PV", "ZNSL_PV",
+        "ZN1_PV",   "ZN1_PV",  "ZNTX_PV", "ZNTX_PV", "ZNEU_1",  "WorldBoxPV",
+        "World_PV",
+    };
+    ref.copy_no = {
+        1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0,   0,   0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 224, 224, 4, 4, 1, 1, 0,
+    };
+    return ref;
+}
+
+TEST_F(ZnenvTest, default_options)
+{
+    auto result = this->run(Options{});
+    // result.print_ref();
+    result.expect_eq(this->base_ref());
+}
+
+//---------------------------------------------------------------------------//
 }  // namespace test
 }  // namespace g4vg

@@ -51,7 +51,12 @@ Repr(T const&) -> Repr<T const&>;
 template<class T>
 std::ostream& operator<<(std::ostream& os, Repr<T> const& r)
 {
-    if constexpr (is_iterable_v<T>)
+    using DecayedT = std::decay_t<T>;
+    if constexpr (std::is_same_v<DecayedT, std::string>)
+    {
+        os << '"' << r.value << '"';
+    }
+    else if constexpr (is_iterable_v<DecayedT>)
     {
         os << '{';
         for (auto const& v : r.value)
@@ -60,11 +65,7 @@ std::ostream& operator<<(std::ostream& os, Repr<T> const& r)
         }
         os << '}';
     }
-    else if constexpr (std::is_same_v<T, std::string>)
-    {
-        os << '"' << r.value << '"';
-    }
-    else if constexpr (std::is_floating_point_v<T>)
+    else if constexpr (std::is_floating_point_v<DecayedT>)
     {
         os << std::setprecision(15) << r.value;
     }
