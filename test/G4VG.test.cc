@@ -489,5 +489,92 @@ TEST_F(CmsEeBackDeeTest, no_refl_factory)
 }
 
 //---------------------------------------------------------------------------//
+class ReplicaTest : public G4VGTestBase
+{
+  protected:
+    std::string basename() const override { return "B5"; }
+
+    static TestResult base_ref();
+};
+
+TestResult ReplicaTest::base_ref()
+{
+    TestResult ref;
+    ref.lv_name = {
+        "magneticLogical",
+        "hodoscope1Logical",
+        "wirePlane1Logical",
+        "chamber1Logical",
+        "firstArmLogical",
+        "hodoscope2Logical",
+        "wirePlane2Logical",
+        "chamber2Logical",
+        "cellLogical",
+        "EMcalorimeterLogical",
+        "HadCalScintiLogical",
+        "HadCalLayerLogical",
+        "HadCalCellLogical",
+        "HadCalColumnLogical",
+        "HadCalorimeterLogical",
+        "secondArmLogical",
+        "worldLogical",
+    };
+    ref.solid_capacity = {
+        6283185307.179586,
+        400000.0,
+        240000.0,
+        2.4e+07,
+        3.6e+10,
+        400000.0,
+        360000.0,
+        3.6e+07,
+        6.75e+06,
+        5.4e+08,
+        900000.0,
+        4.5e+06,
+        9e+07,
+        1.8e+08,
+        1.8e+09,
+        1.12e+11,
+        2.4e+12,
+    };
+    ref.pv_name = {
+        "magneticPhysical",
+    };
+    // 15 direct placements
+    ref.pv_name.insert(ref.pv_name.end(), 15, "hodoscope1Physical");
+    ref.pv_name.push_back("wirePlane1Physical");
+    // 5 direct placements
+    ref.pv_name.insert(ref.pv_name.end(), 5, "chamber1Physical");
+    ref.pv_name.push_back("firstArmPhysical");
+    // 25 direct placements
+    ref.pv_name.insert(ref.pv_name.end(), 25, "hodoscope2Physical");
+    ref.pv_name.push_back("wirePlane2Physical");
+    // 5 direct placements
+    ref.pv_name.insert(ref.pv_name.end(), 5, "chamber2Physical");
+    // 20x4 = 80 parameterized placements of cellLogical
+    ref.pv_name.insert(ref.pv_name.end(), 80, "cellLogical_param");
+    ref.pv_name.push_back("EMcalorimeterPhysical");
+    ref.pv_name.push_back("HadCalScintiPhysical");
+    // 20 replicas of HadCalLayerLogical
+    ref.pv_name.insert(ref.pv_name.end(), 20, "HadCalLayerLogical_PV");
+    // 2 replicas of HadCalCellLogical
+    ref.pv_name.insert(ref.pv_name.end(), 2, "HadCalCellLogical_PV");
+    // 10 replicas of HadCalColumnLogical
+    ref.pv_name.insert(ref.pv_name.end(), 10, "HadCalColumnLogical_PV");
+    ref.pv_name.push_back("HadCalorimeterPhysical");
+    ref.pv_name.push_back("fSecondArmPhys");
+    ref.pv_name.push_back("worldLogical_PV");
+
+    return ref;
+}
+
+TEST_F(ReplicaTest, default_options)
+{
+    auto result = this->run(Options{});
+    result.expect_eq(this->base_ref());
+}
+
+//---------------------------------------------------------------------------//
 }  // namespace test
 }  // namespace g4vg

@@ -13,7 +13,9 @@
 #include <G4LogicalVolumeStore.hh>
 #include <G4PVDivision.hh>
 #include <G4PVPlacement.hh>
+#include <G4PVReplica.hh>
 #include <G4ReflectionFactory.hh>
+#include <G4ReplicaNavigation.hh>
 #include <G4VPhysicalVolume.hh>
 #include <VecGeom/management/Logger.h>
 #include <VecGeom/management/ReflFactory.h>
@@ -306,6 +308,18 @@ auto Converter::build_with_daughters(G4LogicalVolume const* mother_g4lv)
 
                 // Add a copy
                 place_daughter(g4pv);
+            }
+        }
+        else if (auto* replica = dynamic_cast<G4PVReplica*>(g4pv))
+        {
+            // TODO: check and error if the replica uses the kRaxis replication
+            G4ReplicaNavigation replica_navigator;
+            for (size_type j = 0, jmax = replica->GetMultiplicity(); j != jmax;
+                 ++j)
+            {
+                replica_navigator.ComputeTransformation(j, replica);
+                replica->SetCopyNo(j);
+                place_daughter(replica);
             }
         }
         else
