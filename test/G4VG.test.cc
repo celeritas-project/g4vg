@@ -515,7 +515,8 @@ TEST_F(CmsEeBackDeeTest, no_refl_factory)
 class ReplicaTest : public G4VGTestBase
 {
   protected:
-    std::string basename() const override { return "B5"; }
+    // Example B5 from Geant4
+    std::string basename() const override { return "replica"; }
 
     static TestResult base_ref();
 };
