@@ -302,11 +302,9 @@ auto Converter::build_with_daughters(G4LogicalVolume const* mother_g4lv)
             for (size_type j = 0, jmax = g4pv->GetMultiplicity(); j != jmax;
                  ++j)
             {
-                // Use the paramterization to *change* the physical volume's
-                // position (yes, this is how Geant4 does it too)
+                // Modify the G4PV's position and place a copy
                 param->ComputeTransformation(j, g4pv);
-
-                // Add a copy
+                g4pv->SetCopyNo(j);
                 place_daughter(g4pv);
             }
         }
@@ -317,6 +315,7 @@ auto Converter::build_with_daughters(G4LogicalVolume const* mother_g4lv)
             for (size_type j = 0, jmax = replica->GetMultiplicity(); j != jmax;
                  ++j)
             {
+                // Modify the G4PV's position and place a copy
                 replica_navigator.ComputeTransformation(j, replica);
                 replica->SetCopyNo(j);
                 place_daughter(replica);
