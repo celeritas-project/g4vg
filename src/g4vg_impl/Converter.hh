@@ -49,7 +49,6 @@ class Converter
 
   private:
     using VGLogicalVolume = vecgeom::LogicalVolume;
-    using VecPlacedVolId = Converted::VecPlacedVolId;
 
     Options options_;
     int depth_{0};
@@ -60,7 +59,6 @@ class Converter
     std::unique_ptr<LogicalVolumeConverter> convert_lv_;
     std::unordered_set<VGLogicalVolume const*> built_daughters_;
     VecPv placed_volumes_;
-    VecPlacedVolId replicated_;
 
     VGLogicalVolume* build_with_daughters(G4LogicalVolume const* mother_g4lv);
 };

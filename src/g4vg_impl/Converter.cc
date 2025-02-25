@@ -94,21 +94,17 @@ class DaughterPlacer
     using VGLogicalVolume = vecgeom::LogicalVolume;
     using VGPlacedVolume = vecgeom::VPlacedVolume;
     using VecPv = std::vector<G4VPhysicalVolume const*>;
-    using PlacedVolId = unsigned int;
-    using VecPlacedVolId = std::vector<PlacedVolId>;
 
     template<class F>
     DaughterPlacer(F&& build_vgdaughter,
                    bool reflection_factory,
                    Transformer const& trans,
                    VecPv* placed_volumes,
-                   VecPlacedVolId* replicated,
                    G4LogicalVolume const* daughter_g4lv,
                    VGLogicalVolume* mother_lv)
         : reflection_factory_{reflection_factory}
         , convert_transform_{trans}
         , placed_pv_{placed_volumes}
-        , replicated_{replicated}
         , mother_lv_{mother_lv}
     {
         G4VG_EXPECT(placed_pv_);
@@ -134,7 +130,7 @@ class DaughterPlacer
     }
 
     //! Using Geant4 daughter physical volume, place the VecGeom daughter
-    PlacedVolId operator()(G4VPhysicalVolume const* g4pv) const
+    void operator()(G4VPhysicalVolume const* g4pv) const
     {
         G4VG_EXPECT(g4pv);
 
@@ -175,7 +171,6 @@ class DaughterPlacer
         placed_pv_->resize(std::max<std::size_t>(placed_pv_->size(), id + 1),
                            nullptr);
         (*placed_pv_)[id] = g4pv;
-        return id;
     }
 
     //! Place replica daughters: see ReplicaUpdater, ParamUpdater
@@ -187,8 +182,7 @@ class DaughterPlacer
             // Modify the volume's position and place the copy
             update_pv(j, g4pv);
             g4pv->SetCopyNo(j);
-            PlacedVolId placed_id = (*this)(g4pv);
-            replicated_->push_back(placed_id);
+            (*this)(g4pv);
         }
     }
 
@@ -196,7 +190,6 @@ class DaughterPlacer
     bool reflection_factory_;
     Transformer const& convert_transform_;
     VecPv* placed_pv_{nullptr};
-    VecPlacedVolId* replicated_{nullptr};
     VGLogicalVolume* mother_lv_{nullptr};
     VGLogicalVolume* daughter_lv_{nullptr};
     bool flip_z_{false};
@@ -279,7 +272,6 @@ auto Converter::operator()(arg_type g4world) -> result_type
     result.world = world_pv;
     result.logical_volumes = convert_lv_->make_volume_map();
     result.physical_volumes = std::move(placed_volumes_);
-    result.replicated = std::move(replicated_);
 
     G4VG_ENSURE(result.world);
     G4VG_ENSURE(!result.logical_volumes.empty());
@@ -330,7 +322,6 @@ auto Converter::build_with_daughters(G4LogicalVolume const* mother_g4lv)
                                       options_.reflection_factory,
                                       *convert_transform_,
                                       &placed_volumes_,
-                                      &replicated_,
                                       g4pv->GetLogicalVolume(),
                                       mother_lv);
 

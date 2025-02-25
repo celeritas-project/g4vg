@@ -65,7 +65,6 @@ struct Options
  * PVs corresponds to the Geant4 replica/parameterization number and can be
  * used to reconstruct the corresponding instance:
  * \code
-   unsigned int pv_id = c.replicated[0];
    auto* vgpv = vecgeom::GeoManager::Instance().FindPlacedVolume(pv_id);
    auto* g4pv = const_cast<G4VPhysicalVolume*>(c.physical_volumes[pv_id]);
    int copy_no = vgpv->GetCopyNo();
@@ -86,10 +85,8 @@ struct Options
 struct Converted
 {
     using VGPlacedVolume = vecgeom::VPlacedVolume;
-    using PlacedVolumeId = unsigned int;
     using VecLv = std::vector<G4LogicalVolume const*>;
     using VecPv = std::vector<G4VPhysicalVolume const*>;
-    using VecPlacedVolId = std::vector<PlacedVolumeId>;
 
     //! World pointer (host) corresponding to input Geant4 world
     VGPlacedVolume* world{nullptr};
@@ -98,8 +95,6 @@ struct Converted
     VecLv logical_volumes;
     //! Geant4 PVs indexed by VecGeom PlacedVolume ID
     VecPv physical_volumes;
-    //! Set of VecGeom placed volume IDs created by copying a replica PV
-    VecPlacedVolId replicated;
 };
 
 //---------------------------------------------------------------------------//
