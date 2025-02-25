@@ -11,11 +11,9 @@
 #include <unordered_set>
 #include <utility>
 #include <G4LogicalVolumeStore.hh>
-#include <G4PVDivision.hh>
-#include <G4PVPlacement.hh>
-#include <G4PVReplica.hh>
 #include <G4ReflectionFactory.hh>
 #include <G4ReplicaNavigation.hh>
+#include <G4VPVParameterisation.hh>
 #include <G4VPhysicalVolume.hh>
 #include <VecGeom/management/Logger.h>
 #include <VecGeom/management/ReflFactory.h>
