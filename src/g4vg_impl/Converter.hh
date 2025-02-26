@@ -34,7 +34,7 @@ class Converter
     //! \name Type aliases
     using arg_type = G4VPhysicalVolume const*;
     using VecPv = std::vector<G4VPhysicalVolume const*>;
-    using result_type = g4vg::Converted;
+    using result_type = Converted;
     //!@}
 
   public:

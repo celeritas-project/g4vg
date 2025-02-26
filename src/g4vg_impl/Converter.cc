@@ -11,11 +11,9 @@
 #include <unordered_set>
 #include <utility>
 #include <G4LogicalVolumeStore.hh>
-#include <G4PVDivision.hh>
-#include <G4PVPlacement.hh>
-#include <G4PVReplica.hh>
 #include <G4ReflectionFactory.hh>
 #include <G4ReplicaNavigation.hh>
+#include <G4VPVParameterisation.hh>
 #include <G4VPhysicalVolume.hh>
 #include <VecGeom/management/Logger.h>
 #include <VecGeom/management/ReflFactory.h>
@@ -173,15 +171,48 @@ class DaughterPlacer
         (*placed_pv_)[id] = g4pv;
     }
 
+    //! Place replica daughters: see ReplicaUpdater, ParamUpdater
+    template<class F>
+    void operator()(G4VPhysicalVolume* g4pv, F&& update_pv) const
+    {
+        for (int j = 0, jmax = g4pv->GetMultiplicity(); j < jmax; ++j)
+        {
+            // Modify the volume's position and place the copy
+            update_pv(j, g4pv);
+            g4pv->SetCopyNo(j);
+            (*this)(g4pv);
+        }
+    }
+
   private:
     bool reflection_factory_;
     Transformer const& convert_transform_;
-    Converter::VecPv* placed_pv_{nullptr};
+    VecPv* placed_pv_{nullptr};
     VGLogicalVolume* mother_lv_{nullptr};
     VGLogicalVolume* daughter_lv_{nullptr};
     bool flip_z_{false};
 };
 
+struct ReplicaUpdater
+{
+    void operator()(int copy_no, G4VPhysicalVolume* g4pv)
+    {
+        // TODO: check and error if the replica uses the kRaxis replication
+        nav_.ComputeTransformation(copy_no, g4pv);
+    }
+
+    G4ReplicaNavigation nav_;
+};
+
+struct ParamUpdater
+{
+    void operator()(int copy_no, G4VPhysicalVolume* g4pv)
+    {
+        param_->ComputeTransformation(copy_no, g4pv);
+    }
+
+    G4VPVParameterisation* param_;
+};
 }  // namespace
 
 //---------------------------------------------------------------------------//
@@ -283,6 +314,7 @@ auto Converter::build_with_daughters(G4LogicalVolume const* mother_g4lv)
     {
         // Get daughter volume
         G4VPhysicalVolume* g4pv = mother_g4lv->GetDaughter(i);
+        G4VG_ASSERT(g4pv);
 
         DaughterPlacer place_daughter(convert_daughter,
                                       options_.reflection_factory,
@@ -291,44 +323,28 @@ auto Converter::build_with_daughters(G4LogicalVolume const* mother_g4lv)
                                       g4pv->GetLogicalVolume(),
                                       mother_lv);
 
-        if (auto* placed = dynamic_cast<G4PVPlacement const*>(g4pv))
+        switch (g4pv->VolumeType())
         {
-            // Place daughter, accounting for reflection
-            place_daughter(placed);
-        }
-        else if (G4VPVParameterisation* param = g4pv->GetParameterisation())
-        {
-            // Loop over number of replicas
-            for (size_type j = 0, jmax = g4pv->GetMultiplicity(); j != jmax;
-                 ++j)
-            {
-                // Modify the G4PV's position and place a copy
-                param->ComputeTransformation(j, g4pv);
-                g4pv->SetCopyNo(j);
+            case EVolume::kNormal:
+                // Place daughter, accounting for reflection
                 place_daughter(g4pv);
-            }
-        }
-        else if (auto* replica = dynamic_cast<G4PVReplica*>(g4pv))
-        {
-            // TODO: check and error if the replica uses the kRaxis replication
-            G4ReplicaNavigation replica_navigator;
-            for (size_type j = 0, jmax = replica->GetMultiplicity(); j != jmax;
-                 ++j)
-            {
-                // Modify the G4PV's position and place a copy
-                replica_navigator.ComputeTransformation(j, replica);
-                replica->SetCopyNo(j);
-                place_daughter(replica);
-            }
-        }
-        else
-        {
-            TypeDemangler<G4VPhysicalVolume> demangle_pv_type;
-            VECGEOM_LOG(error)
-                << "Unsupported type '" << demangle_pv_type(*g4pv)
-                << "' for physical volume '" << g4pv->GetName()
-                << "' (corresponding LV: "
-                << PrintableLV{g4pv->GetLogicalVolume()} << ")";
+                break;
+            case EVolume::kReplica:
+                // Place daughter in each replicated location
+                place_daughter(g4pv, ReplicaUpdater{});
+                break;
+            case EVolume::kParameterised:
+                // Place each paramterized instance of the daughter
+                G4VG_ASSERT(g4pv->GetParameterisation());
+                place_daughter(g4pv, ParamUpdater{g4pv->GetParameterisation()});
+                break;
+            default:
+                VECGEOM_LOG(error)
+                    << "Unsupported type '"
+                    << TypeDemangler<G4VPhysicalVolume>{}(*g4pv)
+                    << "' for physical volume '" << g4pv->GetName()
+                    << "' (corresponding LV: "
+                    << PrintableLV{g4pv->GetLogicalVolume()} << ")";
         }
     }
 

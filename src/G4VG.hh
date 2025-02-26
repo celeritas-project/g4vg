@@ -56,6 +56,31 @@ struct Options
 //---------------------------------------------------------------------------//
 /*!
  * Result from converting from Geant4 to VecGeom.
+ *
+ * The output of this struct can be used to map back and forth between the
+ * constructed VecGeom and underlying Geant4 geometry. Because VecGeom will
+ * "stamp" replicated or parameterized volumes such that multiple vecgeom
+ * placed volumes correspond to a single G4VPV pointer, we provide an
+ * additional set with IDs of such volumes. The copy number of each of those
+ * PVs corresponds to the Geant4 replica/parameterization number and can be
+ * used to reconstruct the corresponding instance:
+ * \code
+   auto* vgpv = vecgeom::GeoManager::Instance().FindPlacedVolume(pv_id);
+   auto* g4pv = const_cast<G4VPhysicalVolume*>(c.physical_volumes[pv_id]);
+   int copy_no = vgpv->GetCopyNo();
+   auto vol_type = g4pv->pv->VolumeType();
+   if (vol_type == EVolume::kReplica)
+   {
+       G4ReplicaNavigation replica_navigator;
+       replica_navigator.ComputeTransformation(copy_no, g4pv);
+       g4pv->SetCopyNo(copy_no);
+   }
+   else if (vol_type == EVolume::kParameterised)
+   {
+       g4pv->GetParameterisation()->ComputeTransformation(copy_no, g4pv);
+       g4pv->SetCopyNo(copy_no);
+   }
+ * \endcode
  */
 struct Converted
 {
