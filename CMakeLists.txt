@@ -76,8 +76,9 @@ elseif(VecGeom_VERSION VERSION_LESS _min_vecgeom_version)
   message(SEND_ERROR "VecGeom version \"${VecGeom_VERSION}\" at \"${VecGeom_DIR}\", found by a parent project, is too old for G4VG to use: you must update to ${_min_vecgeom_version} or higher")
 endif()
 
-# Load CUDA RDC utils from VecGeom
-include(CudaRdcUtils)
+# Load our local copy in case a dependency hasn't loaded a newer one
+set(_LOCAL_RDCUTILS_FILENAME "${PROJECT_SOURCE_DIR}/cmake/external/CudaRdcUtils.cmake")
+include("${_LOCAL_RDCUTILS_FILENAME}")
 
 #----------------------------------------------------------------------------#
 # Add code
@@ -101,13 +102,9 @@ endif()
 # Export CMake for installation downstream
 
 # Build list of CMake files to install
-set(_cmake_files)
-if(VecGeom_VERSION VERSION_LESS 1.2.10)
-  # Only install RDC utils if not available through vecgeom
-  list(APPEND _cmake_files
-    "${PROJECT_SOURCE_DIR}/cmake/CudaRdcUtils.cmake"
-  )
-endif()
+set(_cmake_files
+  "${PROJECT_SOURCE_DIR}/cmake/external/CudaRdcUtils.cmake"
+)
 foreach(_dep Geant4 VecGeom)
   list(APPEND _cmake_files "${PROJECT_SOURCE_DIR}/cmake/Find${_dep}.cmake")
 endforeach()
