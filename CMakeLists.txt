@@ -77,7 +77,7 @@ elseif(VecGeom_VERSION VERSION_LESS _min_vecgeom_version)
 endif()
 
 # Load our local copy in case a dependency hasn't loaded a newer one
-set(_LOCAL_RDCUTILS_FILENAME "${PROJECT_SOURCE_DIR}/cmake/CudaRdcUtils.cmake")
+set(_LOCAL_RDCUTILS_FILENAME "${PROJECT_SOURCE_DIR}/cmake/external/CudaRdcUtils.cmake")
 include("${_LOCAL_RDCUTILS_FILENAME}")
 
 #----------------------------------------------------------------------------#
@@ -103,7 +103,7 @@ endif()
 
 # Build list of CMake files to install
 set(_cmake_files
-  "${PROJECT_SOURCE_DIR}/cmake/CudaRdcUtils.cmake"
+  "${PROJECT_SOURCE_DIR}/cmake/external/CudaRdcUtils.cmake"
 )
 foreach(_dep Geant4 VecGeom)
   list(APPEND _cmake_files "${PROJECT_SOURCE_DIR}/cmake/Find${_dep}.cmake")
