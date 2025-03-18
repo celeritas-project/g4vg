@@ -10,6 +10,7 @@ concurrency:
 jobs:
   # TODO: this currently includes non-GPU builds as well
   # and won't actually run on device
+  # TODO: need to add vecgeom~shared for testing
   gpu:
     name: gpu
     strategy:
