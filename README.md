@@ -14,3 +14,13 @@ build, using ``CMAKE_PREFIX_PATH`` to inform the configuration script of your
 existing VecGeom and Geant4 installations.
 
 [spack-start]: https://spack.readthedocs.io/en/latest/getting_started.html
+
+# Development
+
+A [spack environment](./scripts/spack.yaml) can be used to set up your
+development toolchain. Please install pre-commit to ensure that code is
+formatted properly:
+```console
+$ pre-commit install
+pre-commit installed at .git/hooks/pre-commit
+```

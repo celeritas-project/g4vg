@@ -1,0 +1,16 @@
+spack:
+  specs:
+    - cmake
+    - "geant4@10.5:"
+    - "googletest@1.10:"
+    - py-pre-commit
+    - "vecgeom@1.2.8:1 +gdml"
+  view: true
+  concretizer:
+    unify: true
+  packages:
+    all:
+      # Note: C++17 is the minimum required
+      # Note: for CUDA support run this command in your environment:
+      # spack config add packages:all:variants:"+cuda cuda_arch=<ARCH>"
+      variants: cxxstd=17
