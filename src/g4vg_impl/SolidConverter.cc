@@ -98,8 +98,8 @@ namespace
 /*!
  * Return theta, phi angles for a G4Para or G4Trap given their symmetry axis.
  */
-[[maybe_unused]] auto
-calculate_theta_phi(G4ThreeVector const& axis) -> std::pair<double, double>
+[[maybe_unused]] auto calculate_theta_phi(G4ThreeVector const& axis)
+    -> std::pair<double, double>
 {
     // The components of the symmetry axis for G4Para/Trap are always encoded
     // as a vector (A.tan(theta)cos(phi), A.tan(theta)sin(phi), A).
@@ -173,6 +173,7 @@ auto SolidConverter::convert_impl(arg_type solid_base) -> result_type
         VGSC_TYPE_FUNC(Box              , box),
         VGSC_TYPE_FUNC(Cons             , cons),
         VGSC_TYPE_FUNC(CutTubs          , cuttubs),
+        VGSC_TYPE_FUNC(DisplacedSolid   , displacedsolid),
         VGSC_TYPE_FUNC(Ellipsoid        , ellipsoid),
         VGSC_TYPE_FUNC(EllipticalCone   , ellipticalcone),
         VGSC_TYPE_FUNC(EllipticalTube   , ellipticaltube),
@@ -265,6 +266,30 @@ auto SolidConverter::cuttubs(arg_type solid_base) -> result_type
         solid.GetDeltaPhiAngle(),
         Vector3D<Precision>(lowNorm[0], lowNorm[1], lowNorm[2]),
         Vector3D<Precision>(hiNorm[0], hiNorm[1], hiNorm[2]));
+}
+
+//---------------------------------------------------------------------------//
+//! Convert a displaced solid with a ficitonal boolean to an infinite sphere
+auto SolidConverter::displacedsolid(arg_type solid_base) -> result_type
+{
+    auto& solid = dynamic_cast<G4DisplacedSolid const&>(solid_base);
+
+    // Get constituent
+    auto* orig_solid = (*this)(*ds->GetConstituentMovedSolid());
+    G4VG_ASSERT(orig_solid);
+
+    // Create temporary PV from converted solid
+    Transformation3D trans = transform_(solid.GetTransform().Invert());
+    auto* orig_lv = new LogicalVolume(solid.GetName() + "/base", converted);
+    auto* orig_pv = temp_lv->Place(&trans);
+
+    // Create infinite orb
+    auto* orb_solid = GeoManager::MakeInstance<UnplacedOrb>(
+        std::numeric_limits<double>::infinity());
+    auto* orb_lv = new LogicalVolume(solid.GetName() + "/orb", converted);
+    auto* orb_pv = temp_lv->Place(&Transformation3D::kIdentity);
+
+    return make_unplaced_boolean<kIntersection>(orig_pv, orb_pv);
 }
 
 //---------------------------------------------------------------------------//
@@ -732,7 +757,6 @@ auto SolidConverter::convert_bool_impl(G4BooleanSolid const& bs)
 void SolidConverter::compare_volumes(G4VSolid const& g4,
                                      vecgeom::VUnplacedVolume const& vg)
 {
-
     if (dynamic_cast<G4BooleanSolid const*>(&g4))
     {
         // Skip comparison of boolean solids because volumes are stochastic
