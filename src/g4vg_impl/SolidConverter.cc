@@ -6,6 +6,7 @@
 //---------------------------------------------------------------------------//
 #include "SolidConverter.hh"
 
+#include <string_view>
 #include <typeindex>
 #include <typeinfo>
 #include <unordered_map>
@@ -123,6 +124,22 @@ VUnplacedVolume*
 make_unplaced_boolean(VPlacedVolume const* left, VPlacedVolume const* right)
 {
     return GeoManager::MakeInstance<UnplacedBooleanVolume<Op>>(Op, left, right);
+}
+
+//---------------------------------------------------------------------------//
+/*!
+ * Create a temporary volume name.
+ *
+ * These are automatically eliminated from the unit test and from downstream
+ * applications.
+ */
+std::string make_temp_name(std::string_view name, std::string_view suffix)
+{
+    std::string result = "[TEMP]@";
+    result += name;
+    result += '/';
+    result += suffix;
+    return result;
 }
 
 //---------------------------------------------------------------------------//
@@ -282,18 +299,17 @@ auto SolidConverter::displacedsolid(arg_type solid_base) -> result_type
 
     // Create temporary PV from converted solid
     Transformation3D trans = transform_(solid.GetTransform().Invert());
-    auto* orig_lv
-        = new LogicalVolume((solid.GetName() + "/base").c_str(), orig_solid);
+    auto* orig_lv = new LogicalVolume(
+        make_temp_name(solid.GetName(), "base").c_str(), orig_solid);
     auto* orig_pv = orig_lv->Place(&trans);
 
-    // Create infinite box
-    constexpr double inf = std::numeric_limits<double>::infinity();
-    auto* box_solid = GeoManager::MakeInstance<UnplacedBox>(inf, inf, inf);
-    auto* box_lv
-        = new LogicalVolume((solid.GetName() + "/box").c_str(), box_solid);
+    // Create empty box
+    auto* box_solid = GeoManager::MakeInstance<UnplacedBox>(0, 0, 0);
+    auto* box_lv = new LogicalVolume(
+        make_temp_name(solid.GetName(), "box").c_str(), box_solid);
     auto* box_pv = box_lv->Place(&Transformation3D::kIdentity);
 
-    return make_unplaced_boolean<kIntersection>(orig_pv, box_pv);
+    return make_unplaced_boolean<kUnion>(orig_pv, box_pv);
 }
 
 //---------------------------------------------------------------------------//
@@ -541,12 +557,9 @@ auto SolidConverter::reflectedsolid(arg_type solid_base) -> result_type
     VUnplacedVolume const* converted = (*this)(*underlying);
 
     // Like the boolean solids, UnplacedScaledShape requires a logical volume
-    // under the hood
-    std::ostringstream label;
-    label << "[TEMP]@" << solid.GetName() << "/refl";
-
-    // Create temporary LV from converted solid
-    auto* temp_lv = new LogicalVolume(label.str().c_str(), converted);
+    // under the hood: create temporary LV from converted solid
+    auto* temp_lv = new LogicalVolume(
+        make_temp_name(solid.GetName(), "refl").c_str(), converted);
     // Place the transformed LV
     VPlacedVolume const* temp_placed
         = temp_lv->Place(&Transformation3D::kIdentity);
@@ -737,16 +750,16 @@ auto SolidConverter::convert_bool_impl(G4BooleanSolid const& bs)
         VUnplacedVolume const* converted = (*this)(*solid);
 
         // Construct name
-        std::ostringstream label;
-        label << "[TEMP]@" << bs.GetName() << '/' << lr[i];
+        std::string label = make_temp_name(bs.GetName(), lr[i]);
         if (trans)
         {
-            label << '*';
+            label += '*';
         }
-        label << '/' << solid->GetName();
+        label += '/';
+        label += solid->GetName();
 
         // Create temporary LV from converted solid
-        auto* temp_lv = new LogicalVolume(label.str().c_str(), converted);
+        auto* temp_lv = new LogicalVolume(label.c_str(), converted);
         // Place the transformed LV
         result[i] = temp_lv->Place(trans ? trans.get()
                                          : &Transformation3D::kIdentity);

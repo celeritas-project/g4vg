@@ -6,8 +6,14 @@
 //---------------------------------------------------------------------------//
 #include "G4VG.hh"
 
+#include <G4DisplacedSolid.hh>
+#include <G4LogicalVolume.hh>
 #include <G4Material.hh>
+#include <G4NistManager.hh>
+#include <G4Orb.hh>
+#include <G4PVPlacement.hh>
 #include <G4RunManager.hh>
+#include <G4ThreeVector.hh>
 #include <VecGeom/management/GeoManager.h>
 #include <VecGeom/volumes/LogicalVolume.h>
 #include <VecGeom/volumes/PlacedVolume.h>
@@ -95,10 +101,11 @@ void TestResult::expect_eq(TestResult const& ref) const
 class G4VGTestBase : public ::testing::Test
 {
   protected:
-    virtual std::string basename() const = 0;
-
     void SetUp() override;
     void TearDown() override;
+
+    virtual std::string basename() const = 0;
+    virtual G4VPhysicalVolume* build_world() = 0;
 
     G4VPhysicalVolume const* g4world() const { return world_; }
 
@@ -142,14 +149,8 @@ void G4VGTestBase::SetUp()
     // Set the basename to a temporary value in case something goes wrong
     loaded_basename = "<FAILURE>";
 
-    // Construct absolute path to GDML input
-    std::string filename = g4vg_source_dir;
-    filename += "/test/data/";
-    filename += this_basename;
-    filename += ".gdml";
-
     // Save world volume
-    world_ = load_gdml(filename);
+    world_ = this->build_world();
     ASSERT_TRUE(world_) << "GDML parser did not return world volume";
 
     // Save the basename
@@ -238,10 +239,29 @@ void G4VGTestBase::run_impl(Options const& options, TestResult& result)
 }
 
 //---------------------------------------------------------------------------//
-class SolidsTest : public G4VGTestBase
+// GDML TESTS
+//---------------------------------------------------------------------------//
+class GdmlTestBase : public G4VGTestBase
 {
   protected:
-    std::string basename() const override { return "solids"; }
+    G4VPhysicalVolume* build_world() final;
+};
+
+G4VPhysicalVolume* GdmlTestBase::build_world()
+{
+    // Construct absolute path to GDML input
+    std::string filename = g4vg_source_dir;
+    filename += "/test/data/";
+    filename += this->basename();
+    filename += ".gdml";
+    return load_gdml(filename);
+}
+
+//---------------------------------------------------------------------------//
+class SolidsTest : public GdmlTestBase
+{
+  protected:
+    std::string basename() const final { return "solids"; }
 
     static TestResult base_ref();
 };
@@ -349,10 +369,10 @@ TEST_F(SolidsTest, no_pointers)
 }
 
 //---------------------------------------------------------------------------//
-class MultiLevelTest : public G4VGTestBase
+class MultiLevelTest : public GdmlTestBase
 {
   protected:
-    std::string basename() const override { return "multi-level"; }
+    std::string basename() const final { return "multi-level"; }
 
     static TestResult base_ref();
 };
@@ -450,10 +470,10 @@ TEST_F(MultiLevelTest, no_refl_factory)
 }
 
 //---------------------------------------------------------------------------//
-class CmsEeBackDeeTest : public G4VGTestBase
+class CmsEeBackDeeTest : public GdmlTestBase
 {
   protected:
-    std::string basename() const override { return "cms-ee-back-dee"; }
+    std::string basename() const final { return "cms-ee-back-dee"; }
 
     static TestResult base_ref();
 };
@@ -512,11 +532,11 @@ TEST_F(CmsEeBackDeeTest, no_refl_factory)
 }
 
 //---------------------------------------------------------------------------//
-class ReplicaTest : public G4VGTestBase
+class ReplicaTest : public GdmlTestBase
 {
   protected:
     // Example B5 from Geant4
-    std::string basename() const override { return "replica"; }
+    std::string basename() const final { return "replica"; }
 
     static TestResult base_ref();
 };
@@ -612,10 +632,10 @@ TEST_F(ReplicaTest, default_options)
 }
 
 //---------------------------------------------------------------------------//
-class ZnenvTest : public G4VGTestBase
+class ZnenvTest : public GdmlTestBase
 {
   protected:
-    std::string basename() const override { return "znenv"; }
+    std::string basename() const final { return "znenv"; }
 
     static TestResult base_ref();
 };
@@ -678,6 +698,84 @@ TEST_F(ZnenvTest, default_options)
     auto result = this->run(Options{});
     // result.print_ref();
     result.expect_eq(this->base_ref());
+}
+
+//---------------------------------------------------------------------------//
+// CUSTOM G4 BUILDERS
+//---------------------------------------------------------------------------//
+class DisplacedTestBase : public G4VGTestBase
+{
+  protected:
+    std::string basename() const final { return "displaced"; }
+    G4VPhysicalVolume* build_world() final;
+};
+
+G4VPhysicalVolume* DisplacedTestBase::build_world()
+{
+    G4Material* mat = G4NistManager::Instance()->FindOrBuildMaterial("G4_AIR");
+
+    G4LogicalVolume* parent_lv = nullptr;
+
+    auto* world_s = new G4Orb("world_solid", 100);
+    auto* world_l = new G4LogicalVolume(world_s, mat, "world");
+    auto* world_p = new G4PVPlacement(G4Transform3D{},
+                                      world_l,
+                                      "world_pv",
+                                      /* parent = */ nullptr,
+                                      /* many = */ false,
+                                      /* copy_no = */ 0);
+
+    auto* dright_s = new G4Orb("dright_solid", 10);
+    auto* dright_l = new G4LogicalVolume(dright_s, mat, "dright");
+    auto* dright_p = new G4PVPlacement(/* rotation = */ nullptr,
+                                       G4ThreeVector(25.0, 0.0, 0.0),
+                                       dright_l,
+                                       "dright_pv",
+                                       /* parent = */ world_l,
+                                       /* many = */ false,
+                                       /* copy_no = */ 0);
+
+    auto* dleft_underlying = new G4Orb("dleft_base", 10);
+    auto* dleft_s = new G4DisplacedSolid(
+        "dleft_solid", dleft_underlying, nullptr, G4ThreeVector(-25.0, 0, 0));
+    auto* dleft_l = new G4LogicalVolume(dleft_s, mat, "dleft");
+    auto* dleft_p = new G4PVPlacement(/* rotation = */ nullptr,
+                                      G4ThreeVector(0.0, 0.0, 0.0),
+                                      dleft_l,
+                                      "dleft_pv",
+                                      /* parent = */ world_l,
+                                      /* many = */ false,
+                                      /* copy_no = */ 0);
+
+    return world_p;
+}
+
+TEST_F(DisplacedTestBase, default_options)
+{
+    auto result = this->run(Options{});
+
+    TestResult ref;
+    ref.lv_name = {
+        "world",
+        "dright",
+        "dleft",
+    };
+    ref.solid_capacity = {
+        4188790.20478639,
+        4188.79020478639,
+        4199.11397533979,
+    };
+    ref.pv_name = {
+        "dright_pv",
+        "dleft_pv",
+        "world_pv",
+    };
+    ref.copy_no = {
+        0,
+        0,
+        0,
+    };
+    result.expect_eq(ref);
 }
 
 //---------------------------------------------------------------------------//
