@@ -714,8 +714,6 @@ G4VPhysicalVolume* DisplacedTestBase::build_world()
 {
     G4Material* mat = G4NistManager::Instance()->FindOrBuildMaterial("G4_AIR");
 
-    G4LogicalVolume* parent_lv = nullptr;
-
     auto* world_s = new G4Orb("world_solid", 100);
     auto* world_l = new G4LogicalVolume(world_s, mat, "world");
     auto* world_p = new G4PVPlacement(G4Transform3D{},
@@ -727,25 +725,25 @@ G4VPhysicalVolume* DisplacedTestBase::build_world()
 
     auto* dright_s = new G4Orb("dright_solid", 10);
     auto* dright_l = new G4LogicalVolume(dright_s, mat, "dright");
-    auto* dright_p = new G4PVPlacement(/* rotation = */ nullptr,
-                                       G4ThreeVector(25.0, 0.0, 0.0),
-                                       dright_l,
-                                       "dright_pv",
-                                       /* parent = */ world_l,
-                                       /* many = */ false,
-                                       /* copy_no = */ 0);
+    new G4PVPlacement(/* rotation = */ nullptr,
+                      G4ThreeVector(25.0, 0.0, 0.0),
+                      dright_l,
+                      "dright_pv",
+                      /* parent = */ world_l,
+                      /* many = */ false,
+                      /* copy_no = */ 0);
 
     auto* dleft_underlying = new G4Orb("dleft_base", 10);
     auto* dleft_s = new G4DisplacedSolid(
         "dleft_solid", dleft_underlying, nullptr, G4ThreeVector(-25.0, 0, 0));
     auto* dleft_l = new G4LogicalVolume(dleft_s, mat, "dleft");
-    auto* dleft_p = new G4PVPlacement(/* rotation = */ nullptr,
-                                      G4ThreeVector(0.0, 0.0, 0.0),
-                                      dleft_l,
-                                      "dleft_pv",
-                                      /* parent = */ world_l,
-                                      /* many = */ false,
-                                      /* copy_no = */ 0);
+    new G4PVPlacement(/* rotation = */ nullptr,
+                      G4ThreeVector(0.0, 0.0, 0.0),
+                      dleft_l,
+                      "dleft_pv",
+                      /* parent = */ world_l,
+                      /* many = */ false,
+                      /* copy_no = */ 0);
 
     return world_p;
 }
