@@ -274,22 +274,26 @@ auto SolidConverter::displacedsolid(arg_type solid_base) -> result_type
 {
     auto& solid = dynamic_cast<G4DisplacedSolid const&>(solid_base);
 
-    // Get constituent
-    auto* orig_solid = (*this)(*ds->GetConstituentMovedSolid());
+    // Convert constituent
+    auto* g4solid = solid.GetConstituentMovedSolid();
+    G4VG_ASSERT(g4solid);
+    auto* orig_solid = (*this)(*g4solid);
     G4VG_ASSERT(orig_solid);
 
     // Create temporary PV from converted solid
     Transformation3D trans = transform_(solid.GetTransform().Invert());
-    auto* orig_lv = new LogicalVolume(solid.GetName() + "/base", converted);
-    auto* orig_pv = temp_lv->Place(&trans);
+    auto* orig_lv
+        = new LogicalVolume((solid.GetName() + "/base").c_str(), orig_solid);
+    auto* orig_pv = orig_lv->Place(&trans);
 
-    // Create infinite orb
-    auto* orb_solid = GeoManager::MakeInstance<UnplacedOrb>(
-        std::numeric_limits<double>::infinity());
-    auto* orb_lv = new LogicalVolume(solid.GetName() + "/orb", converted);
-    auto* orb_pv = temp_lv->Place(&Transformation3D::kIdentity);
+    // Create infinite box
+    constexpr double inf = std::numeric_limits<double>::infinity();
+    auto* box_solid = GeoManager::MakeInstance<UnplacedBox>(inf, inf, inf);
+    auto* box_lv
+        = new LogicalVolume((solid.GetName() + "/box").c_str(), box_solid);
+    auto* box_pv = box_lv->Place(&Transformation3D::kIdentity);
 
-    return make_unplaced_boolean<kIntersection>(orig_pv, orb_pv);
+    return make_unplaced_boolean<kIntersection>(orig_pv, box_pv);
 }
 
 //---------------------------------------------------------------------------//
