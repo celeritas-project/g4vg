@@ -6,6 +6,7 @@
 //---------------------------------------------------------------------------//
 #include "SolidConverter.hh"
 
+#include <string_view>
 #include <typeindex>
 #include <typeinfo>
 #include <unordered_map>
@@ -98,8 +99,8 @@ namespace
 /*!
  * Return theta, phi angles for a G4Para or G4Trap given their symmetry axis.
  */
-[[maybe_unused]] auto
-calculate_theta_phi(G4ThreeVector const& axis) -> std::pair<double, double>
+[[maybe_unused]] auto calculate_theta_phi(G4ThreeVector const& axis)
+    -> std::pair<double, double>
 {
     // The components of the symmetry axis for G4Para/Trap are always encoded
     // as a vector (A.tan(theta)cos(phi), A.tan(theta)sin(phi), A).
@@ -123,6 +124,22 @@ VUnplacedVolume*
 make_unplaced_boolean(VPlacedVolume const* left, VPlacedVolume const* right)
 {
     return GeoManager::MakeInstance<UnplacedBooleanVolume<Op>>(Op, left, right);
+}
+
+//---------------------------------------------------------------------------//
+/*!
+ * Create a temporary volume name.
+ *
+ * These are automatically eliminated from the unit test and from downstream
+ * applications.
+ */
+std::string make_temp_name(std::string_view name, std::string_view suffix)
+{
+    std::string result = "[TEMP]@";
+    result += name;
+    result += '/';
+    result += suffix;
+    return result;
 }
 
 //---------------------------------------------------------------------------//
@@ -173,6 +190,7 @@ auto SolidConverter::convert_impl(arg_type solid_base) -> result_type
         VGSC_TYPE_FUNC(Box              , box),
         VGSC_TYPE_FUNC(Cons             , cons),
         VGSC_TYPE_FUNC(CutTubs          , cuttubs),
+        VGSC_TYPE_FUNC(DisplacedSolid   , displacedsolid),
         VGSC_TYPE_FUNC(Ellipsoid        , ellipsoid),
         VGSC_TYPE_FUNC(EllipticalCone   , ellipticalcone),
         VGSC_TYPE_FUNC(EllipticalTube   , ellipticaltube),
@@ -265,6 +283,33 @@ auto SolidConverter::cuttubs(arg_type solid_base) -> result_type
         solid.GetDeltaPhiAngle(),
         Vector3D<Precision>(lowNorm[0], lowNorm[1], lowNorm[2]),
         Vector3D<Precision>(hiNorm[0], hiNorm[1], hiNorm[2]));
+}
+
+//---------------------------------------------------------------------------//
+//! Convert a displaced solid with a ficitonal boolean to an infinite sphere
+auto SolidConverter::displacedsolid(arg_type solid_base) -> result_type
+{
+    auto& solid = dynamic_cast<G4DisplacedSolid const&>(solid_base);
+
+    // Convert constituent
+    auto* g4solid = solid.GetConstituentMovedSolid();
+    G4VG_ASSERT(g4solid);
+    auto* orig_solid = (*this)(*g4solid);
+    G4VG_ASSERT(orig_solid);
+
+    // Create temporary PV from converted solid
+    Transformation3D trans = transform_(solid.GetTransform().Invert());
+    auto* orig_lv = new LogicalVolume(
+        make_temp_name(solid.GetName(), "base").c_str(), orig_solid);
+    auto* orig_pv = orig_lv->Place(&trans);
+
+    // Create empty box
+    auto* box_solid = GeoManager::MakeInstance<UnplacedBox>(0, 0, 0);
+    auto* box_lv = new LogicalVolume(
+        make_temp_name(solid.GetName(), "box").c_str(), box_solid);
+    auto* box_pv = box_lv->Place(&Transformation3D::kIdentity);
+
+    return make_unplaced_boolean<kUnion>(orig_pv, box_pv);
 }
 
 //---------------------------------------------------------------------------//
@@ -512,12 +557,9 @@ auto SolidConverter::reflectedsolid(arg_type solid_base) -> result_type
     VUnplacedVolume const* converted = (*this)(*underlying);
 
     // Like the boolean solids, UnplacedScaledShape requires a logical volume
-    // under the hood
-    std::ostringstream label;
-    label << "[TEMP]@" << solid.GetName() << "/refl";
-
-    // Create temporary LV from converted solid
-    auto* temp_lv = new LogicalVolume(label.str().c_str(), converted);
+    // under the hood: create temporary LV from converted solid
+    auto* temp_lv = new LogicalVolume(
+        make_temp_name(solid.GetName(), "refl").c_str(), converted);
     // Place the transformed LV
     VPlacedVolume const* temp_placed
         = temp_lv->Place(&Transformation3D::kIdentity);
@@ -708,16 +750,16 @@ auto SolidConverter::convert_bool_impl(G4BooleanSolid const& bs)
         VUnplacedVolume const* converted = (*this)(*solid);
 
         // Construct name
-        std::ostringstream label;
-        label << "[TEMP]@" << bs.GetName() << '/' << lr[i];
+        std::string label = make_temp_name(bs.GetName(), lr[i]);
         if (trans)
         {
-            label << '*';
+            label += '*';
         }
-        label << '/' << solid->GetName();
+        label += '/';
+        label += solid->GetName();
 
         // Create temporary LV from converted solid
-        auto* temp_lv = new LogicalVolume(label.str().c_str(), converted);
+        auto* temp_lv = new LogicalVolume(label.c_str(), converted);
         // Place the transformed LV
         result[i] = temp_lv->Place(trans ? trans.get()
                                          : &Transformation3D::kIdentity);
@@ -732,7 +774,6 @@ auto SolidConverter::convert_bool_impl(G4BooleanSolid const& bs)
 void SolidConverter::compare_volumes(G4VSolid const& g4,
                                      vecgeom::VUnplacedVolume const& vg)
 {
-
     if (dynamic_cast<G4BooleanSolid const*>(&g4))
     {
         // Skip comparison of boolean solids because volumes are stochastic

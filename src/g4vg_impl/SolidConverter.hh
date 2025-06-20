@@ -9,8 +9,8 @@
 #include <array>
 #include <unordered_map>
 
-class G4VSolid;
 class G4BooleanSolid;
+class G4VSolid;
 
 namespace vecgeom
 {
@@ -72,6 +72,7 @@ class SolidConverter
     result_type box(arg_type);
     result_type cons(arg_type);
     result_type cuttubs(arg_type);
+    result_type displacedsolid(arg_type);
     result_type ellipsoid(arg_type);
     result_type ellipticalcone(arg_type);
     result_type ellipticaltube(arg_type);
