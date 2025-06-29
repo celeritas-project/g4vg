@@ -53,7 +53,6 @@
 #include <G4VSolid.hh>
 #include <G4Version.hh>
 #include <VecGeom/management/GeoManager.h>
-#include <VecGeom/management/Logger.h>
 #include <VecGeom/volumes/UnplacedAssembly.h>
 #include <VecGeom/volumes/UnplacedBooleanVolume.h>
 #include <VecGeom/volumes/UnplacedBox.h>
@@ -80,6 +79,7 @@
 #include <VecGeom/volumes/UnplacedTrd.h>
 #include <VecGeom/volumes/UnplacedTube.h>
 
+#include "Logger.hh"
 #include "Scaler.hh"
 #include "Transformer.hh"
 #include "TypeDemangler.hh"
@@ -787,7 +787,7 @@ void SolidConverter::compare_volumes(G4VSolid const& g4,
     if (G4VG_UNLIKELY(
             !(std::fabs(vg_cap - g4_cap) < 0.01 * std::max(vg_cap, g4_cap))))
     {
-        VECGEOM_LOG(warning)
+        G4VG_LOG(warning)
             << "Solid type '" << g4.GetEntityType()
             << "' conversion may have failed: VecGeom/G4 volume ratio is "
             << vg_cap << " / " << g4_cap << " [len^3] = " << vg_cap / g4_cap;

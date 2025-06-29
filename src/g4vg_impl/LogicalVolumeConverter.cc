@@ -9,12 +9,12 @@
 #include <G4LogicalVolume.hh>
 #include <G4VSolid.hh>
 #include <VecGeom/management/GeoManager.h>
-#include <VecGeom/management/Logger.h>
 #include <VecGeom/volumes/LogicalVolume.h>
 #include <VecGeom/volumes/UnplacedVolume.h>
 
 #include "Assert.hh"
 #include "GDMLUtils.hh"
+#include "Logger.hh"
 #include "PrintableLV.hh"
 #include "SolidConverter.hh"
 
@@ -82,16 +82,16 @@ auto LogicalVolumeConverter::construct_base(arg_type g4lv) -> result_type
     }
     catch (g4vg::RuntimeError const& e)
     {
-        VECGEOM_LOG(error) << "Failed to convert solid type '"
-                           << g4lv.GetSolid()->GetEntityType() << "' named '"
-                           << g4lv.GetSolid()->GetName()
-                           << "': " << e.what_minimal();
+        G4VG_LOG(error) << "Failed to convert solid type '"
+                        << g4lv.GetSolid()->GetEntityType() << "' named '"
+                        << g4lv.GetSolid()->GetName()
+                        << "': " << e.what_minimal();
         shape = this->convert_solid_.to_sphere(*g4lv.GetSolid());
-        VECGEOM_LOG(warning)
+        G4VG_LOG(warning)
             << "Replaced unknown solid with sphere with capacity "
             << shape->Capacity() << " [len^3]";
-        VECGEOM_LOG(info) << "Unsupported solid belongs to logical volume "
-                          << PrintableLV{&g4lv};
+        G4VG_LOG(info) << "Unsupported solid belongs to logical volume "
+                       << PrintableLV{&g4lv};
     }
 
     std::string name = g4lv.GetName();
