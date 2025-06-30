@@ -15,11 +15,11 @@
 #include <G4ReplicaNavigation.hh>
 #include <G4VPVParameterisation.hh>
 #include <G4VPhysicalVolume.hh>
-#include <VecGeom/management/Logger.h>
 #include <VecGeom/management/ReflFactory.h>
 #include <VecGeom/volumes/LogicalVolume.h>
 #include <VecGeom/volumes/PlacedVolume.h>
 
+#include "Logger.hh"
 #include "LogicalVolumeConverter.hh"
 #include "PrintableLV.hh"
 #include "Scaler.hh"
@@ -239,7 +239,7 @@ auto Converter::operator()(arg_type g4world) -> result_type
     G4VG_EXPECT(!g4world->GetRotation());
     G4VG_EXPECT(g4world->GetTranslation() == G4ThreeVector(0, 0, 0));
 
-    VECGEOM_LOG(status) << "Converting Geant4 geometry";
+    G4VG_LOG(status) << "Converting Geant4 geometry";
 
     // Recurse through physical volumes once to build underlying LV
     std::unordered_set<G4LogicalVolume const*> all_g4lv;
@@ -339,7 +339,7 @@ auto Converter::build_with_daughters(G4LogicalVolume const* mother_g4lv)
                 place_daughter(g4pv, ParamUpdater{g4pv->GetParameterisation()});
                 break;
             default:
-                VECGEOM_LOG(error)
+                G4VG_LOG(error)
                     << "Unsupported type '"
                     << TypeDemangler<G4VPhysicalVolume>{}(*g4pv)
                     << "' for physical volume '" << g4pv->GetName()
