@@ -2,246 +2,67 @@
 // Copyright G4VG contributors: see top-level COPYRIGHT file for details
 // SPDX-License-Identifier: (Apache-2.0 OR MIT)
 //---------------------------------------------------------------------------//
-//! \file G4VG.test.cc
+//! \file Gdml.test.cc
 //---------------------------------------------------------------------------//
-#include "G4VG.hh"
 
-#include <G4DisplacedSolid.hh>
+#include <regex>
+#include <string>
+#include <G4GDMLParser.hh>
 #include <G4LogicalVolume.hh>
-#include <G4Material.hh>
-#include <G4NistManager.hh>
-#include <G4Orb.hh>
-#include <G4PVPlacement.hh>
-#include <G4RunManager.hh>
-#include <G4ThreeVector.hh>
-#include <VecGeom/management/GeoManager.h>
-#include <VecGeom/volumes/LogicalVolume.h>
-#include <VecGeom/volumes/PlacedVolume.h>
-#include <VecGeom/volumes/UnplacedVolume.h>
+#include <G4LogicalVolumeStore.hh>
+#include <G4PhysicalVolumeStore.hh>
+#include <G4SolidStore.hh>
+#include <G4Version.hh>
 #include <gtest/gtest.h>
 
-#include "LoadGdml.hh"
-#include "Repr.hh"
+#include "G4VG.hh"
+#include "TestBase.hh"
 #include "g4vg_test_config.h"
-
-using VGLV = vecgeom::LogicalVolume;
-using VGPV = vecgeom::VPlacedVolume;
-using std::cout;
-using std::endl;
 
 namespace g4vg
 {
 namespace test
 {
+namespace
+{
 //---------------------------------------------------------------------------//
-struct TestResult
-{
-    //! Name of the Geant4 volume corresponding to the VecGeom LV
-    std::vector<std::string> lv_name;
-    std::vector<double> solid_capacity;
-    std::vector<std::string> pv_name;
-    std::vector<int> copy_no;
 
-    void print_ref() const;
-    void expect_eq(TestResult const& reference) const;
-};
-
-void TestResult::print_ref() const
+bool search_pointer(std::string const& s, std::smatch& ptr_match)
 {
-    // clang-format: off
-    cout << "/***** REFERENCE RESULT *****/\n"
-            "TestResult ref;\n"
-            "ref.lv_name = "
-         << repr(lv_name)
-         << ";\n"
-            "ref.solid_capacity = "
-         << repr(solid_capacity)
-         << ";\n"
-            "ref.pv_name = "
-         << repr(pv_name)
-         << ";\n"
-            "ref.copy_no = "
-         << repr(copy_no)
-         << ";\n"
-            "result.expect_eq(ref);\n"
-            "/***** END REFERENCE RESULT *****/\n";
-    // clang-format: on
+    // Search either for th end of the expression, or an underscore that likely
+    // indicates a _refl or _PV suffix
+    static std::regex const ptr_regex{"0x[0-9a-f]{4,16}(?=_|$)"};
+    return std::regex_search(s, ptr_match, ptr_regex);
 }
 
-void TestResult::expect_eq(TestResult const& ref) const
+//---------------------------------------------------------------------------//
+//! Remove pointer address from inside geometry names
+template<class StoreT>
+void excise_pointers(StoreT& obj_store)
 {
-    EXPECT_EQ(lv_name, ref.lv_name);
-    ASSERT_EQ(solid_capacity.size(), ref.solid_capacity.size());
-    ASSERT_EQ(ref.lv_name.size(), ref.solid_capacity.size());
-    for (std::size_t i = 0; i != solid_capacity.size(); ++i)
+    std::smatch sm;
+    for (auto* obj : obj_store)
     {
-        if (ref.solid_capacity[i] == 0.0)
-        {
-            EXPECT_EQ(solid_capacity[i], 0)
-                << "Solid for " << i << " = " << lv_name[i];
+        if (!obj)
             continue;
-        }
-        else if (solid_capacity[i] == 0.0)
-        {
-            ADD_FAILURE() << "Got zero capacity for " << i << " = "
-                          << lv_name[i];
-            continue;
-        }
 
-        EXPECT_LT(std::fabs(solid_capacity[i] / ref.solid_capacity[i] - 1),
-                  1e-4)
-            << "Solid for " << lv_name[i] << " capacity is wrong: got "
-            << solid_capacity[i] << " but expected " << ref.solid_capacity[i];
+        std::string const& name = obj->GetName();
+        if (search_pointer(name, sm))
+        {
+            std::string new_name = name.substr(0, sm.position());
+            new_name += name.substr(sm.position() + sm.length());
+            obj->SetName(new_name);
+        }
     }
-    EXPECT_EQ(pv_name, ref.pv_name) << repr(pv_name);
-    EXPECT_EQ(copy_no, ref.copy_no) << repr(copy_no);
+#if G4VERSION_NUMBER >= 1100
+    obj_store.UpdateMap();  // Added by geommng-V10-07-00
+#endif
 }
+}  // namespace
 
 //---------------------------------------------------------------------------//
-class G4VGTestBase : public ::testing::Test
-{
-  protected:
-    void SetUp() override;
-    void TearDown() override;
-
-    virtual std::string basename() const = 0;
-    virtual G4VPhysicalVolume* build_world() = 0;
-
-    G4VPhysicalVolume const* g4world() const { return world_; }
-
-    TestResult run(Options const& options)
-    {
-        TestResult result;
-        this->run_impl(options, result);
-        return result;
-    }
-
-  private:
-    G4VPhysicalVolume* world_{nullptr};
-
-    void run_impl(Options const& options, TestResult& result);
-};
-
-//---------------------------------------------------------------------------//
-/*!
- * Load Geant4 geometry during setup.
- */
-void G4VGTestBase::SetUp()
-{
-    // Guard against loading multiple geometry in the same run
-    static std::string loaded_basename{};
-    std::string this_basename = this->basename();
-
-    if (!loaded_basename.empty())
-    {
-        if (this_basename == loaded_basename)
-        {
-            // Otherwise the loaded file matches the current one; exit early
-            return;
-        }
-        else
-        {
-            // Reset geometry and materials
-            G4RunManager::GetRunManager()->ReinitializeGeometry();
-            G4Material::GetMaterialTable()->clear();
-        }
-    }
-    // Set the basename to a temporary value in case something goes wrong
-    loaded_basename = "<FAILURE>";
-
-    // Save world volume
-    world_ = this->build_world();
-    ASSERT_TRUE(world_) << "GDML parser did not return world volume";
-
-    // Save the basename
-    loaded_basename = this_basename;
-}
-
-void G4VGTestBase::TearDown()
-{
-    vecgeom::GeoManager::Instance().Clear();
-}
-
-// Use a separate "void" function to test due to ASSERT_ macros
-void G4VGTestBase::run_impl(Options const& options, TestResult& result)
-{
-    // Convert
-    auto converted = g4vg::convert(this->g4world(), options);
-    ASSERT_TRUE(converted.world);
-
-    // Set world in VecGeom manager
-    auto& vg_manager = vecgeom::GeoManager::Instance();
-    vg_manager.RegisterPlacedVolume(converted.world);
-    vg_manager.SetWorldAndClose(converted.world);
-
-    // Set up result sizes
-    result.lv_name.reserve(converted.logical_volumes.size());
-    result.solid_capacity.reserve(converted.logical_volumes.size());
-    result.pv_name.reserve(converted.physical_volumes.size());
-    result.copy_no.reserve(converted.physical_volumes.size());
-
-    // Process logical volumes
-    for (std::size_t vgid = 0; vgid < converted.logical_volumes.size(); ++vgid)
-    {
-        // Check the LV exists
-        auto* vglv = vg_manager.FindLogicalVolume(vgid);
-        ASSERT_TRUE(vglv);
-        std::string vgname{vglv->GetName()};
-
-        // Save Geant4 name
-        auto* g4lv = converted.logical_volumes[vgid];
-        if (g4lv)
-        {
-            std::string const& g4name = g4lv->GetName();
-            result.lv_name.push_back(g4name);
-
-            // Save VecGeom name
-            EXPECT_EQ(0, vgname.find(g4name))
-                << "Expected Geant4 name '" << g4name
-                << "' to be at the start of VecGeom name '" << vgname << "'";
-        }
-        else if (vgname.find("[TEMP]") == 0)
-        {
-            // Don't add capacity for temporary volumes
-            continue;
-        }
-
-        // Check solid capacity/volume
-        auto* vguv = vglv->GetUnplacedVolume();
-        ASSERT_TRUE(vguv);
-        result.solid_capacity.push_back(vguv->Capacity());
-    }
-
-    // Process physical volumes
-    for (std::size_t vgid = 0; vgid < converted.physical_volumes.size(); ++vgid)
-    {
-        // Save Geant4 name
-        auto* g4pv = converted.physical_volumes[vgid];
-        if (!g4pv)
-        {
-            continue;
-        }
-        std::string const& g4name = g4pv->GetName();
-        result.pv_name.push_back(g4name);
-
-        // Check VecGeom name
-        VGPV* vgpv = vg_manager.FindPlacedVolume(vgid);
-        ASSERT_TRUE(vgpv);
-        std::string vgname{vgpv->GetName()};
-        EXPECT_EQ(0, vgname.find(g4name))
-            << "Expected Geant4 name '" << g4name
-            << "' to be at the start of VecGeom name '" << vgname << "'";
-
-        // Save VecGeom copy number (may differ from single G4 volume if it's a
-        // "stamped" instance of a replica/parameterised volume)
-        result.copy_no.push_back(vgpv->GetCopyNo());
-    }
-}
-
-//---------------------------------------------------------------------------//
-// GDML TESTS
-//---------------------------------------------------------------------------//
-class GdmlTestBase : public G4VGTestBase
+//! Load a GDML file to convert
+class GdmlTestBase : public TestBase
 {
   protected:
     G4VPhysicalVolume* build_world() final;
@@ -254,7 +75,16 @@ G4VPhysicalVolume* GdmlTestBase::build_world()
     filename += "/test/data/";
     filename += this->basename();
     filename += ".gdml";
-    return load_gdml(filename);
+
+    G4GDMLParser gdml_parser;
+    gdml_parser.SetStripFlag(false);
+    gdml_parser.Read(filename, /* validate_gdml_schema = */ false);
+
+    excise_pointers(*G4SolidStore::GetInstance());
+    excise_pointers(*G4PhysicalVolumeStore::GetInstance());
+    excise_pointers(*G4LogicalVolumeStore::GetInstance());
+
+    return gdml_parser.GetWorldVolume();
 }
 
 //---------------------------------------------------------------------------//
@@ -323,10 +153,7 @@ TEST_F(SolidsTest, default_options)
 
     {
         // Check that a pointer was appended
-        auto& vg_manager = vecgeom::GeoManager::Instance();
-        auto* vglv = vg_manager.FindLogicalVolume(0);
-        ASSERT_TRUE(vglv);
-        std::string name{vglv->GetName()};
+        auto name = this->logical_volume_name(0);
         EXPECT_EQ(0, name.find("box5000x"))
             << "Expected pointer suffix at the end of VecGeom name '" << name
             << "'";
@@ -360,10 +187,7 @@ TEST_F(SolidsTest, no_pointers)
 
     {
         // Check that pointers were not appended
-        auto& vg_manager = vecgeom::GeoManager::Instance();
-        auto* vglv = vg_manager.FindLogicalVolume(0);
-        ASSERT_TRUE(vglv);
-        std::string name{vglv->GetName()};
+        auto name = this->logical_volume_name(0);
         EXPECT_EQ("box500", name);
     }
 }
@@ -698,87 +522,6 @@ TEST_F(ZnenvTest, default_options)
     auto result = this->run(Options{});
     // result.print_ref();
     result.expect_eq(this->base_ref());
-}
-
-//---------------------------------------------------------------------------//
-// CUSTOM G4 BUILDERS
-//---------------------------------------------------------------------------//
-class DisplacedTestBase : public G4VGTestBase
-{
-  protected:
-    std::string basename() const final { return "displaced"; }
-    G4VPhysicalVolume* build_world() final;
-};
-
-G4VPhysicalVolume* DisplacedTestBase::build_world()
-{
-    G4Material* mat = G4NistManager::Instance()->FindOrBuildMaterial("G4_AIR");
-
-    auto* world_s = new G4Orb("world_solid", 100);
-    auto* world_l = new G4LogicalVolume(world_s, mat, "world");
-    auto* world_p = new G4PVPlacement(G4Transform3D{},
-                                      world_l,
-                                      "world_pv",
-                                      /* parent = */ nullptr,
-                                      /* many = */ false,
-                                      /* copy_no = */ 0);
-
-    auto* dright_s = new G4Orb("dright_solid", 10);
-    auto* dright_l = new G4LogicalVolume(dright_s, mat, "dright");
-    new G4PVPlacement(/* rotation = */ nullptr,
-                      G4ThreeVector(25.0, 0.0, 0.0),
-                      dright_l,
-                      "dright_pv",
-                      /* parent = */ world_l,
-                      /* many = */ false,
-                      /* copy_no = */ 0);
-
-    auto* dleft_underlying = new G4Orb("dleft_base", 10);
-    auto* dleft_s = new G4DisplacedSolid(
-        "dleft_solid", dleft_underlying, nullptr, G4ThreeVector(-25.0, 0, 0));
-    auto* dleft_l = new G4LogicalVolume(dleft_s, mat, "dleft");
-    new G4PVPlacement(/* rotation = */ nullptr,
-                      G4ThreeVector(0.0, 0.0, 0.0),
-                      dleft_l,
-                      "dleft_pv",
-                      /* parent = */ world_l,
-                      /* many = */ false,
-                      /* copy_no = */ 0);
-
-    return world_p;
-}
-
-TEST_F(DisplacedTestBase, default_options)
-{
-    auto result = this->run(Options{});
-
-    TestResult ref;
-    ref.lv_name = {
-        "world",
-        "dright",
-        "dleft",
-    };
-    ref.solid_capacity = {
-        4188790.20478639,
-        4188.79020478639,
-        4199.11397533979,
-    };
-    ref.pv_name = {
-        "dright_pv",
-        "dleft_pv",
-        "world_pv",
-    };
-    ref.copy_no = {
-        0,
-        0,
-        0,
-    };
-    // Boolean volume calculation differs across plaforms
-    EXPECT_TRUE(result.solid_capacity.size() >= 3
-                && result.solid_capacity[2] > 0);
-    ref.solid_capacity[2] = 0;
-    result.solid_capacity[2] = 0;
-    result.expect_eq(ref);
 }
 
 //---------------------------------------------------------------------------//
