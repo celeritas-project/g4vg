@@ -96,7 +96,7 @@ TEST_F(DisplacedTestBase, default_options)
         0,
         0,
     };
-    // Boolean volume calculation differs across plaforms
+    // Boolean volume calculation differs across platforms
     EXPECT_TRUE(result.solid_capacity.size() >= 3
                 && result.solid_capacity[2] > 0);
     ref.solid_capacity[2] = 0;
