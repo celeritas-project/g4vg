@@ -27,7 +27,7 @@ cuda_rdc_target_include_directories(g4vg_test_lib
   PUBLIC "${PROJECT_BINARY_DIR}/test"
 )
 
-foreach(name IN ITEMS Gdml Custom)
+foreach(name IN ITEMS Gdml Custom VoxelTestBase)
   string(TOLOWER "${name}_test" tgt)
   add_executable(${tgt} ${name}.test.cc)
   cuda_rdc_target_link_libraries(${tgt} PUBLIC g4vg_test_lib)
