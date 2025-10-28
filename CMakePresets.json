@@ -76,27 +76,6 @@
                     "value": "Debug"
                 }
             }
-        },
-        {
-            "name": "mikpres",
-            "description": "",
-            "displayName": "",
-            "inherits": [
-                ".debug"
-            ],
-            "cacheVariables": 
-            {
-              "BUILD_SHARED_LIBS":     {"type": "BOOL", "value": "ON"},
-              "G4VG_BUILD_TESTS":     {"type": "BOOL", "value": "ON"},
-              "CMAKE_CXX_STANDARD": "17",
-              "CMAKE_CXX_EXTENSIONS": {"type": "BOOL", "value": "OFF"},
-              "CMAKE_CXX_FLAGS": "-Wall -Wextra -pedantic -Werror -Wno-error=deprecated-declarations",
-              "CMAKE_CUDA_FLAGS": "-Werror all-warnings",
-              "CMAKE_CUDA_ARCHITECTURES": {
-                    "type": "STRING",
-                    "value": "7%"
-                }
-            }
         }
     ],
     "buildPresets": [
