@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: cef0300fd0fc4d2a87a85fa2093c6b283ea36f4b # v5.0.0 , 5 Oct 2024
+    rev: v6.0.0 # v5.0.0 , 5 Oct 2024
     hooks:
     - id: check-added-large-files
       args: ['--maxkb=100']
