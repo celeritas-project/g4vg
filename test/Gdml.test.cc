@@ -29,8 +29,8 @@ namespace
 
 bool search_pointer(std::string const& s, std::smatch& ptr_match)
 {
-    // Search either for the end of the expression, or an underscore that likely
-    // indicates a _refl or _PV suffix
+    // Search either for the end of the expression, or an underscore that
+    // likely indicates a _refl or _PV suffix
     static std::regex const ptr_regex{"0x[0-9a-f]{4,16}(?=_|$)"};
     return std::regex_search(s, ptr_match, ptr_regex);
 }

@@ -84,7 +84,7 @@
             "inherits": [
                 ".debug"
             ],
-            "cacheVariables": 
+            "cacheVariables":
             {
               "BUILD_SHARED_LIBS":     {"type": "BOOL", "value": "ON"},
               "G4VG_BUILD_TESTS":     {"type": "BOOL", "value": "ON"},

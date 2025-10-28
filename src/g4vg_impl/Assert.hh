@@ -6,9 +6,9 @@
 //---------------------------------------------------------------------------//
 #pragma once
 
-#include <string>
 #include <sstream>
 #include <stdexcept>
+#include <string>
 
 #if !defined(G4VG_DEBUG)
 #    warning "G4VG_DEBUG should be defined as a private target definition"
