@@ -20,7 +20,6 @@
 #include <G4PVReplica.hh>
 #include <G4PVParameterised.hh>
 #include "ICRP110PhantomNestedParameterisation.hh"
-#include "ICRP110PhantomMaterial_Female.hh"
 
 #include "G4VG.hh"
 #include "TestBase.hh"
@@ -39,37 +38,37 @@ class NestedReplicaParametrization : public CustomTestBase
     std::string basename() const final { return "voxel"; }
     G4VPhysicalVolume* build_world() final;
 };
-std::vector<G4Material*> GetMaterialNIST()
-{   
-    auto * nist = G4NistManager::Instance();
-    std::vector<G4Material*> pMaterials;
-    pMaterials.push_back(nist->FindOrBuildMaterial("G4_AIR"));//0
-    pMaterials.push_back(nist->FindOrBuildMaterial("G4_WATER"));//1
-    pMaterials.push_back(nist->FindOrBuildMaterial("G4_BONE_COMPACT_ICRU"));//2
-    pMaterials.push_back(nist->FindOrBuildMaterial("G4_LUNG_ICRP"));//3
-    pMaterials.push_back(nist->FindOrBuildMaterial("G4_AL"));//4
-    pMaterials.push_back(nist->FindOrBuildMaterial("G4_ADIPOSE_TISSUE_ICRP"));//5
-    pMaterials.push_back(nist->FindOrBuildMaterial("G4_SKIN_ICRP"));//6
-    pMaterials.push_back(nist->FindOrBuildMaterial("G4_BRAIN_ICRP"));//7
-    pMaterials.push_back(nist->FindOrBuildMaterial("G4_AMBER"));//8
-    return pMaterials;
-}
+
 std::vector<G4Material*> GetMaterialICRU()
 {   
     auto * nist = G4NistManager::Instance();
-    auto * fMaterial_Female = new ICRP110PhantomMaterial_Female();
-    fMaterial_Female -> DefineMaterials();
+    G4double A = 1.01*g/mole;
+    G4double Z;
+    auto elH = new G4Element ("Hydrogen","H",Z = 1.,A);
 
     std::vector<G4Material*> pMaterials;
     pMaterials.push_back(nist->FindOrBuildMaterial("G4_AIR"));//0
-    pMaterials.push_back(fMaterial_Female -> GetMaterial("teeth"));//1
-    pMaterials.push_back(fMaterial_Female -> GetMaterial("bone"));//2
-    pMaterials.push_back(fMaterial_Female -> GetMaterial("humeri_upper"));//3
-    pMaterials.push_back(fMaterial_Female -> GetMaterial("humeri_lower"));//4
-    pMaterials.push_back(fMaterial_Female -> GetMaterial("arm_lower"));//5
-    pMaterials.push_back(fMaterial_Female -> GetMaterial("hand"));//6
-    pMaterials.push_back(fMaterial_Female -> GetMaterial("clavicle"));//7
-    pMaterials.push_back(fMaterial_Female -> GetMaterial("cranium"));//8
+    auto * h10 =  new G4Material("h10", 0.1*g/cm3, 1,kStateGas);
+    h10->AddElement(elH,1);
+    pMaterials.push_back(h10);//1
+    auto * h20 =  new G4Material("h20", 0.2*g/cm3, 1,kStateGas);
+    h20->AddElement(elH,1);
+    pMaterials.push_back(h20);//2
+    auto * h30 =  new G4Material("h30", 0.3*g/cm3, 1,kStateGas);
+    h30->AddElement(elH,1);
+    pMaterials.push_back(h30);//3
+    auto * h40 =  new G4Material("h40", 0.4*g/cm3, 1,kStateGas);
+    h40->AddElement(elH,1);
+    pMaterials.push_back(h40);//4     
+    auto * h50 =  new G4Material("h50", 0.5*g/cm3, 1,kStateGas);
+    h50->AddElement(elH,1);
+    pMaterials.push_back(h50);//5
+    auto * h60 =  new G4Material("h60", 0.6*g/cm3, 1,kStateGas);
+    h60->AddElement(elH,1);
+    pMaterials.push_back(h60);//6
+    auto * h70 =  new G4Material("h70", 0.7*g/cm3, 1,kStateGas);
+    h70->AddElement(elH,1);
+    pMaterials.push_back(h70);//7   
     return pMaterials;
 }
 void PlacePhantomInVolume(G4LogicalVolume* logicVolume,std::vector<G4Material*> pMaterials)

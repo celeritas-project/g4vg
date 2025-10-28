@@ -17,7 +17,6 @@ configure_file(g4vg_test_config.h.in g4vg_test_config.h @ONLY)
 add_library(g4vg_test_lib
   TestBase.cc
   ICRP110PhantomNestedParameterisation.cc
-  ICRP110PhantomMaterial_Female.cc
 )
 cuda_rdc_target_link_libraries(g4vg_test_lib PUBLIC
   GTest::GTest GTest::gtest_main # For testing

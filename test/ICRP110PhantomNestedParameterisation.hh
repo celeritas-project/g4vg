@@ -1,34 +1,3 @@
-//
-// ********************************************************************
-// * License and Disclaimer                                           *
-// *                                                                  *
-// * The  Geant4 software  is  copyright of the Copyright Holders  of *
-// * the Geant4 Collaboration.  It is provided  under  the terms  and *
-// * conditions of the Geant4 Software License,  included in the file *
-// * LICENSE and available at  http://cern.ch/geant4/license .  These *
-// * include a list of copyright holders.                             *
-// *                                                                  *
-// * Neither the authors of this software system, nor their employing *
-// * institutes,nor the agencies providing financial support for this *
-// * work  make  any representation or  warranty, express or implied, *
-// * regarding  this  software system or assume any liability for its *
-// * use.  Please see the license in the file  LICENSE  and URL above *
-// * for the full disclaimer and the limitation of liability.         *
-// *                                                                  *
-// * This  code  implementation is the result of  the  scientific and *
-// * technical work of the GEANT4 collaboration.                      *
-// * By using,  copying,  modifying or  distributing the software (or *
-// * any work based  on the software)  you  agree  to acknowledge its *
-// * use  in  resulting  scientific  publications,  and indicate your *
-// * acceptance of all terms of the Geant4 Software license.          *
-// ********************************************************************
-//
-//
-// Code developed by:
-// S.Guatelli, M. Large and A. Malaroda, University of Wollongong
-//
-// Code based on the extended example DICOM
-//
 #ifndef ICRP110PhantomNestedParameterisation_HH
 #define ICRP110PhantomNestedParameterisation_HH
 
@@ -45,7 +14,7 @@ class G4VSolid;
 class G4Material;
 class G4VisAttributes;
 
-// CSG Entities which may be parameterised/replicated
+
 class G4Box;
 class G4Tubs;
 class G4Trd;
@@ -60,7 +29,6 @@ class G4Polycone;
 class G4Polyhedra;
 class G4Hype;
 
-/// Implements a G4VNestedParameterisation
 
 class ICRP110PhantomNestedParameterisation : public G4VNestedParameterisation
 {
@@ -127,7 +95,6 @@ private:  // Dummy declarations to get rid of warnings ...
   void ComputeDimensions (G4Polyhedra&, const G4int,
                           const G4VPhysicalVolume*) const {}
   
-  void ReadColourData();
   
   using G4VNestedParameterisation::ComputeMaterial;
   
@@ -137,6 +104,5 @@ private:
   G4int fnX,fnY,fnZ;    // Number of voxels along X, Y and Z
   std::vector<G4Material*> fMaterials; // Vector with materials
   size_t* fMaterialIndices; // Index of the material associated to each voxel
-  std::map<G4String,G4VisAttributes*> fColours;
 };
 #endif
