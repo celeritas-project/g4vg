@@ -16,6 +16,8 @@ configure_file(g4vg_test_config.h.in g4vg_test_config.h @ONLY)
 
 add_library(g4vg_test_lib
   TestBase.cc
+  ICRP110PhantomNestedParameterisation.cc
+  ICRP110PhantomMaterial_Female.cc
 )
 cuda_rdc_target_link_libraries(g4vg_test_lib PUBLIC
   GTest::GTest GTest::gtest_main # For testing
@@ -27,7 +29,7 @@ cuda_rdc_target_include_directories(g4vg_test_lib
   PUBLIC "${PROJECT_BINARY_DIR}/test"
 )
 
-foreach(name IN ITEMS Gdml Custom VoxelTestBase)
+foreach(name IN ITEMS Gdml Custom NestedReplicaParametrization)
   string(TOLOWER "${name}_test" tgt)
   add_executable(${tgt} ${name}.test.cc)
   cuda_rdc_target_link_libraries(${tgt} PUBLIC g4vg_test_lib)
