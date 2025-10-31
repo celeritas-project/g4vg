@@ -63,50 +63,7 @@ class ICRP110PhantomNestedParameterisation : public G4VNestedParameterisation
     // Additional standard Parameterisation methods,
     // which can be optionally defined, in case solid is used.
     void ComputeDimensions(G4Box&, G4int const, G4VPhysicalVolume const*) const;
-
-  private:  // Dummy declarations to get rid of warnings ...
-    void ComputeDimensions(G4Trd&, G4int const, G4VPhysicalVolume const*) const
-    {
-    }
-    void ComputeDimensions(G4Trap&, G4int const, G4VPhysicalVolume const*) const
-    {
-    }
-    void ComputeDimensions(G4Cons&, G4int const, G4VPhysicalVolume const*) const
-    {
-    }
-    void
-    ComputeDimensions(G4Sphere&, G4int const, G4VPhysicalVolume const*) const
-    {
-    }
-    void
-    ComputeDimensions(G4Ellipsoid&, G4int const, G4VPhysicalVolume const*) const
-    {
-    }
-    void ComputeDimensions(G4Orb&, G4int const, G4VPhysicalVolume const*) const
-    {
-    }
-    void
-    ComputeDimensions(G4Torus&, G4int const, G4VPhysicalVolume const*) const
-    {
-    }
-    void ComputeDimensions(G4Para&, G4int const, G4VPhysicalVolume const*) const
-    {
-    }
-    void ComputeDimensions(G4Hype&, G4int const, G4VPhysicalVolume const*) const
-    {
-    }
-    void ComputeDimensions(G4Tubs&, G4int const, G4VPhysicalVolume const*) const
-    {
-    }
-    void
-    ComputeDimensions(G4Polycone&, G4int const, G4VPhysicalVolume const*) const
-    {
-    }
-    void
-    ComputeDimensions(G4Polyhedra&, G4int const, G4VPhysicalVolume const*) const
-    {
-    }
-
+    using G4VNestedParameterisation::ComputeDimensions;
     using G4VNestedParameterisation::ComputeMaterial;
 
   private:

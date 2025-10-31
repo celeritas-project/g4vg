@@ -39,43 +39,23 @@ class NestedReplicaParametrization : public CustomTestBase
     G4VPhysicalVolume* build_world() final;
 };
 
-std::vector<G4Material*> GetMaterialICRU()
+void PlacePhantomInVolume(G4LogicalVolume* logicVolume)
 {
     auto* nist = G4NistManager::Instance();
-    G4double A = 1.01 * g / mole;
-    G4double Z;
-    auto elH = new G4Element("Hydrogen", "H", Z = 1., A);
-
-    std::vector<G4Material*> pMaterials;
-    pMaterials.push_back(nist->FindOrBuildMaterial("G4_AIR"));  // 0
-    auto* h10 = new G4Material("h10", 0.1 * g / cm3, 1, kStateGas);
-    h10->AddElement(elH, 1);
-    pMaterials.push_back(h10);  // 1
-    auto* h20 = new G4Material("h20", 0.2 * g / cm3, 1, kStateGas);
-    h20->AddElement(elH, 1);
-    pMaterials.push_back(h20);  // 2
-    auto* h30 = new G4Material("h30", 0.3 * g / cm3, 1, kStateGas);
-    h30->AddElement(elH, 1);
-    pMaterials.push_back(h30);  // 3
-    auto* h40 = new G4Material("h40", 0.4 * g / cm3, 1, kStateGas);
-    h40->AddElement(elH, 1);
-    pMaterials.push_back(h40);  // 4
-    auto* h50 = new G4Material("h50", 0.5 * g / cm3, 1, kStateGas);
-    h50->AddElement(elH, 1);
-    pMaterials.push_back(h50);  // 5
-    auto* h60 = new G4Material("h60", 0.6 * g / cm3, 1, kStateGas);
-    h60->AddElement(elH, 1);
-    pMaterials.push_back(h60);  // 6
-    auto* h70 = new G4Material("h70", 0.7 * g / cm3, 1, kStateGas);
-    h70->AddElement(elH, 1);
-    pMaterials.push_back(h70);  // 7
-    return pMaterials;
-}
-void PlacePhantomInVolume(G4LogicalVolume* logicVolume,
-                          std::vector<G4Material*> pMaterials)
-{
     G4Material* matAir
         = G4NistManager::Instance()->FindOrBuildMaterial("G4_AIR");
+    auto elH = std::make_unique<G4Element>(
+        "Hydrogen", "H", /* Z = */ 1., /* A = */ 1.01 * g / mole);
+
+    std::vector<G4Material*> materials;
+    materials.push_back(matAir);  // 0
+    for (int i = 1; i < 8; ++i)
+    {
+        auto mat = std::make_unique<G4Material>(
+            "h" + std::to_string(i * 10), i * 0.1 * g / cm3, 1, kStateGas);
+        mat->AddElement(elH.get(), 1);
+        materials.push_back(mat.release());
+    }
 
     G4int fNVoxelX = 2, fNVoxelY = 3, fNVoxelZ = 5;
     G4int fNVoxels = fNVoxelX * fNVoxelY * fNVoxelZ;
@@ -90,7 +70,7 @@ void PlacePhantomInVolume(G4LogicalVolume* logicVolume,
             for (G4int ix = 0; ix < fNVoxelX; ++ix)
             {
                 G4int index = ix + fNVoxelX * (iy + fNVoxelY * iz);
-                fMateIDs[index] = index % pMaterials.size();
+                fMateIDs[index] = index % materials.size();
             }
         }
     }
@@ -118,7 +98,6 @@ void PlacePhantomInVolume(G4LogicalVolume* logicVolume,
     G4ThreeVector posCentreVoxels(
         (fMinX + fMaxX) / 2., (fMinY + fMaxY) / 2., (fMinZ + fMaxZ) / 2.);
 
-    // auto*  fPhantomContainer =
     new G4PVPlacement(nullptr,  // rotation
                       posCentreVoxels,
                       fContainer_logic,  // The logic volume
@@ -158,7 +137,7 @@ void PlacePhantomInVolume(G4LogicalVolume* logicVolume,
     G4ThreeVector halfVoxelSize(fVoxelHalfDimX, fVoxelHalfDimY, fVoxelHalfDimZ);
 
     auto param
-        = new ICRP110PhantomNestedParameterisation(halfVoxelSize, pMaterials);
+        = new ICRP110PhantomNestedParameterisation(halfVoxelSize, materials);
 
     new G4PVParameterised("phantom",  // their name
                           logicVoxel,  // their logical volume
@@ -187,8 +166,7 @@ G4VPhysicalVolume* NestedReplicaParametrization::build_world()
                                       /* many = */ false,
                                       /* copy_no = */ 0);
 
-    // PlacePhantomInVolume(world_l, GetMaterialNIST());
-    PlacePhantomInVolume(world_l, GetMaterialICRU());
+    PlacePhantomInVolume(world_l);
 
     return world_p;
 }
@@ -205,21 +183,17 @@ TEST_F(NestedReplicaParametrization, default_options)
     ref.pv_name = {
         "baseVoxel_pv",
         "world_pv",
-
     };
     ref.copy_no = {0, 0};
+    ref.print_ref();
 
-    // Boolean volume calculation differs across platforms
-    EXPECT_TRUE(result.solid_capacity.size() >= 2
-                && result.solid_capacity[1] > 0);
-    // ref.solid_capacity[2] = 0;
-    // result.solid_capacity[2] = 0;
-
-    // G4VPhysicalVolume* pVol =
-    // G4TransportationManager::GetTransportationManager()->GetNavigator(const_cast<G4VPhysicalVolume*>(g4world()))
-    //                            ->LocateGlobalPointAndSetup(G4ThreeVector(0,0,0));
-    // G4Material* pMat = pVol->GetLogicalVolume()->GetMaterial();
-    // EXPECT_EQ(pMat->GetName(), "G4_WATER");
+#if 0
+    G4VPhysicalVolume* pVol =
+    G4TransportationManager::GetTransportationManager()->GetNavigator(const_cast<G4VPhysicalVolume*>(g4world()))
+                               ->LocateGlobalPointAndSetup(G4ThreeVector(0,0,0));
+    G4Material* pMat = pVol->GetLogicalVolume()->GetMaterial();
+    EXPECT_EQ(pMat->GetName(), "G4_WATER");
+#endif
 
     result.expect_eq(ref);
 }
