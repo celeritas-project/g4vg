@@ -298,7 +298,7 @@ G4VPhysicalVolume* NestedReplicaParametrizationTest::build_world()
     auto* voxel_lv = new G4LogicalVolume(voxel_s, air, "voxel");
     auto* param = new VoxelParameterisation(
         half_voxel_dim, materials, num_voxels, std::move(material_indices));
-    auto* voxel_pv = new G4PVParameterised(
+    new G4PVParameterised(
         "voxel", voxel_lv, rep_x_lv, kZAxis, num_voxels[2], param);
 
     return world_pv;
