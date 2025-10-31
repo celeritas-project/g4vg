@@ -136,8 +136,7 @@ void PlacePhantomInVolume(G4LogicalVolume* logicVolume)
     // Parameterisation to define the material of each voxel
     G4ThreeVector halfVoxelSize(fVoxelHalfDimX, fVoxelHalfDimY, fVoxelHalfDimZ);
 
-    auto param
-        = new ICRP110PhantomNestedParameterisation(halfVoxelSize, materials);
+    auto param = new VoxelParameterisation(halfVoxelSize, materials);
 
     new G4PVParameterised("phantom",  // their name
                           logicVoxel,  // their logical volume

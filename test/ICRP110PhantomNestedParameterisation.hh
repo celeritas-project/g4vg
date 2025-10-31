@@ -1,7 +1,6 @@
 #ifndef ICRP110PhantomNestedParameterisation_HH
 #define ICRP110PhantomNestedParameterisation_HH
 
-#include <map>
 #include <vector>
 
 #include "G4ThreeVector.hh"
@@ -14,38 +13,25 @@ class G4VSolid;
 class G4Material;
 class G4VisAttributes;
 
-class G4Box;
-class G4Tubs;
-class G4Trd;
-class G4Trap;
-class G4Cons;
-class G4Sphere;
-class G4Ellipsoid;
-class G4Orb;
-class G4Torus;
-class G4Para;
-class G4Polycone;
-class G4Polyhedra;
-class G4Hype;
-
-class ICRP110PhantomNestedParameterisation : public G4VNestedParameterisation
+class VoxelParameterisation final : public G4VNestedParameterisation
 {
   public:
-    explicit ICRP110PhantomNestedParameterisation(G4ThreeVector const& voxelSize,
-                                                  std::vector<G4Material*>& mat,
-                                                  G4int fnX_ = 0,
-                                                  G4int fnY_ = 0,
-                                                  G4int fnZ_ = 0);
+    explicit VoxelParameterisation(G4ThreeVector const& voxelSize,
+                                   std::vector<G4Material*>& mat,
+                                   G4int fnX_ = 0,
+                                   G4int fnY_ = 0,
+                                   G4int fnZ_ = 0);
     // the total number of voxels along X, Y and Z
     // are initialised to zero
 
-    ~ICRP110PhantomNestedParameterisation();
+    ~VoxelParameterisation();
 
-    virtual G4Material* ComputeMaterial(G4VPhysicalVolume* currentVol,
-                                        G4int const repNo,
-                                        G4VTouchable const* parentTouch);
-    G4int GetNumberOfMaterials() const;
-    G4Material* GetMaterial(G4int idx) const;
+    virtual G4Material*
+    ComputeMaterial(G4VPhysicalVolume* currentVol,
+                    G4int const repNo,
+                    G4VTouchable const* parentTouch) override;
+    G4int GetNumberOfMaterials() const override;
+    G4Material* GetMaterial(G4int idx) const override;
 
     G4int GetMaterialIndex(G4int copyNo) const;
 
@@ -57,12 +43,14 @@ class ICRP110PhantomNestedParameterisation : public G4VNestedParameterisation
     // This method passes the total number of voxels along X, Y and Z from
     // the DetectorConstruction to the NestedParameterisation class
 
-    void
-    ComputeTransformation(G4int const no, G4VPhysicalVolume* currentPV) const;
+    void ComputeTransformation(G4int const no,
+                               G4VPhysicalVolume* currentPV) const override;
 
     // Additional standard Parameterisation methods,
     // which can be optionally defined, in case solid is used.
-    void ComputeDimensions(G4Box&, G4int const, G4VPhysicalVolume const*) const;
+    void ComputeDimensions(G4Box&,
+                           G4int const,
+                           G4VPhysicalVolume const*) const override;
     using G4VNestedParameterisation::ComputeDimensions;
     using G4VNestedParameterisation::ComputeMaterial;
 

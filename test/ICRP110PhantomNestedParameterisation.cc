@@ -9,12 +9,11 @@
 #include "G4VVisManager.hh"
 #include "G4VisAttributes.hh"
 
-ICRP110PhantomNestedParameterisation::ICRP110PhantomNestedParameterisation(
-    G4ThreeVector const& halfVoxelSize,
-    std::vector<G4Material*>& mat,
-    G4int fnX_,
-    G4int fnY_,
-    G4int fnZ_)
+VoxelParameterisation::VoxelParameterisation(G4ThreeVector const& halfVoxelSize,
+                                             std::vector<G4Material*>& mat,
+                                             G4int fnX_,
+                                             G4int fnY_,
+                                             G4int fnZ_)
     : fdX(halfVoxelSize.x())
     , fdY(halfVoxelSize.y())
     , fdZ(halfVoxelSize.z())
@@ -28,21 +27,19 @@ ICRP110PhantomNestedParameterisation::ICRP110PhantomNestedParameterisation(
 {
 }
 
-ICRP110PhantomNestedParameterisation::~ICRP110PhantomNestedParameterisation()
-{
-}
+VoxelParameterisation::~VoxelParameterisation() {}
 
-void ICRP110PhantomNestedParameterisation::SetNoVoxel(G4int nx,
-                                                      G4int ny,
-                                                      G4int nz)
+void VoxelParameterisation::SetNoVoxel(G4int nx, G4int ny, G4int nz)
 {
     fnX = nx;
     fnY = ny;
     fnZ = nz;
 }
 
-G4Material* ICRP110PhantomNestedParameterisation::ComputeMaterial(
-    G4VPhysicalVolume* physVol, G4int const iz, G4VTouchable const* parentTouch)
+G4Material*
+VoxelParameterisation::ComputeMaterial(G4VPhysicalVolume* physVol,
+                                       G4int const iz,
+                                       G4VTouchable const* parentTouch)
 {
     if (parentTouch == nullptr)
         return fMaterials[0];
@@ -69,30 +66,31 @@ G4Material* ICRP110PhantomNestedParameterisation::ComputeMaterial(
     return mate;
 }
 
-G4int ICRP110PhantomNestedParameterisation::GetMaterialIndex(G4int copyNo) const
+G4int VoxelParameterisation::GetMaterialIndex(G4int copyNo) const
 {
     return fMaterialIndices[copyNo];
 }
 
-G4int ICRP110PhantomNestedParameterisation::GetNumberOfMaterials() const
+G4int VoxelParameterisation::GetNumberOfMaterials() const
 {
     return fMaterials.size();
 }
 
-G4Material* ICRP110PhantomNestedParameterisation::GetMaterial(G4int i) const
+G4Material* VoxelParameterisation::GetMaterial(G4int i) const
 {
     return fMaterials[i];
 }
 
-void ICRP110PhantomNestedParameterisation::ComputeTransformation(
+void VoxelParameterisation::ComputeTransformation(
     G4int const copyNo, G4VPhysicalVolume* physVol) const
 {
     physVol->SetTranslation(G4ThreeVector(
         0., 0., (2. * static_cast<double>(copyNo) + 1.) * fdZ - fdZ * fnZ));
 }
 
-void ICRP110PhantomNestedParameterisation::ComputeDimensions(
-    G4Box& box, G4int const, G4VPhysicalVolume const*) const
+void VoxelParameterisation::ComputeDimensions(G4Box& box,
+                                              G4int const,
+                                              G4VPhysicalVolume const*) const
 {
     box.SetXHalfLength(fdX);
     box.SetYHalfLength(fdY);

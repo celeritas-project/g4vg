@@ -206,6 +206,7 @@ struct ReplicaUpdater
 
 struct ParamUpdater
 {
+    // TODO: on construction, dynamic cast to G4VVolumeMaterialScanner
     void operator()(int copy_no, G4VPhysicalVolume* g4pv)
     {
         param_->ComputeTransformation(copy_no, g4pv);
