@@ -14,7 +14,7 @@ class G4VPhysicalVolume;
 
 namespace g4vg
 {
-class Options;
+struct Options;
 namespace test
 {
 //---------------------------------------------------------------------------//
