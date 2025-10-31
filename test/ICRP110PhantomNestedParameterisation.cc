@@ -6,34 +6,17 @@
 #include "G4ThreeVector.hh"
 #include "G4VPhysicalVolume.hh"
 #include "G4VTouchable.hh"
-#include "G4VVisManager.hh"
-#include "G4VisAttributes.hh"
 
-VoxelParameterisation::VoxelParameterisation(G4ThreeVector const& halfVoxelSize,
-                                             std::vector<G4Material*>& mat,
-                                             G4int fnX_,
-                                             G4int fnY_,
-                                             G4int fnZ_)
-    : fdX(halfVoxelSize.x())
-    , fdY(halfVoxelSize.y())
-    , fdZ(halfVoxelSize.z())
-    , fnX(fnX_)
-    , fnY(fnY_)
-    , fnZ(fnZ_)
-    ,  // number of voxels along X, Y and Z
-    fMaterials(mat)
-    ,  // vector of defined materials
-    fMaterialIndices(nullptr)  // vector which associates MaterialID to voxels
+VoxelParameterisation::VoxelParameterisation(
+    G4ThreeVector const& half_voxel_size,
+    std::vector<G4Material*> materials,
+    std::array<G4int, 3> num_voxels,
+    std::vector<std::size_t> material_indices)
+    : half_dim_(half_voxel_size)
+    , num_voxels_(num_voxels)
+    , materials_(std::move(materials))
+    , material_indices_(std::move(material_indices))
 {
-}
-
-VoxelParameterisation::~VoxelParameterisation() {}
-
-void VoxelParameterisation::SetNoVoxel(G4int nx, G4int ny, G4int nz)
-{
-    fnX = nx;
-    fnY = ny;
-    fnZ = nz;
 }
 
 G4Material*
@@ -42,57 +25,44 @@ VoxelParameterisation::ComputeMaterial(G4VPhysicalVolume* physVol,
                                        G4VTouchable const* parentTouch)
 {
     if (parentTouch == nullptr)
-        return fMaterials[0];
+        return materials_[0];
 
     G4int ix = parentTouch->GetReplicaNumber(0);
     G4int iy = parentTouch->GetReplicaNumber(1);
 
-    G4int copyID = ix + fnX * iy + fnX * fnY * iz;
-    std::size_t matIndex = GetMaterialIndex(copyID);
-    G4Material* mate = fMaterials[matIndex];
+    G4int copyID = ix + num_voxels_[0] * iy
+                   + num_voxels_[0] * num_voxels_[1] * iz;
+    std::size_t matIndex = material_indices_[copyID];
+    G4Material* mate = materials_[matIndex];
 
-    if (true && physVol && G4VVisManager::GetConcreteInstance())
-    {
-        G4String mateName = fMaterials.at(matIndex)->GetName();
-        std::string::size_type iuu = mateName.find("__");
-
-        if (iuu != std::string::npos)
-        {
-            mateName = mateName.substr(0, iuu);  // Associate material
-        }
-    }
     physVol->GetLogicalVolume()->SetMaterial(mate);
 
     return mate;
 }
 
-G4int VoxelParameterisation::GetMaterialIndex(G4int copyNo) const
-{
-    return fMaterialIndices[copyNo];
-}
-
 G4int VoxelParameterisation::GetNumberOfMaterials() const
 {
-    return fMaterials.size();
+    return materials_.size();
 }
 
 G4Material* VoxelParameterisation::GetMaterial(G4int i) const
 {
-    return fMaterials[i];
+    return materials_[i];
 }
 
 void VoxelParameterisation::ComputeTransformation(
     G4int const copyNo, G4VPhysicalVolume* physVol) const
 {
-    physVol->SetTranslation(G4ThreeVector(
-        0., 0., (2. * static_cast<double>(copyNo) + 1.) * fdZ - fdZ * fnZ));
+    G4double z_offset = (2. * static_cast<double>(copyNo) + 1.) * half_dim_.z()
+                        - half_dim_.z() * num_voxels_[2];
+    physVol->SetTranslation(G4ThreeVector(0., 0., z_offset));
 }
 
 void VoxelParameterisation::ComputeDimensions(G4Box& box,
                                               G4int const,
                                               G4VPhysicalVolume const*) const
 {
-    box.SetXHalfLength(fdX);
-    box.SetYHalfLength(fdY);
-    box.SetZHalfLength(fdZ);
+    box.SetXHalfLength(half_dim_.x());
+    box.SetYHalfLength(half_dim_.y());
+    box.SetZHalfLength(half_dim_.z());
 }
