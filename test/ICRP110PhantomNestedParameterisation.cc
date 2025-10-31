@@ -10,7 +10,7 @@
 VoxelParameterisation::VoxelParameterisation(
     G4ThreeVector const& half_voxel_size,
     std::vector<G4Material*> materials,
-    std::array<G4int, 3> num_voxels,
+    std::array<int, 3> num_voxels,
     std::vector<std::size_t> material_indices)
     : half_dim_(half_voxel_size)
     , num_voxels_(num_voxels)
@@ -21,17 +21,16 @@ VoxelParameterisation::VoxelParameterisation(
 
 G4Material*
 VoxelParameterisation::ComputeMaterial(G4VPhysicalVolume* physVol,
-                                       G4int const iz,
+                                       int const iz,
                                        G4VTouchable const* parentTouch)
 {
     if (parentTouch == nullptr)
         return materials_[0];
 
-    G4int ix = parentTouch->GetReplicaNumber(0);
-    G4int iy = parentTouch->GetReplicaNumber(1);
+    int ix = parentTouch->GetReplicaNumber(0);
+    int iy = parentTouch->GetReplicaNumber(1);
 
-    G4int copyID = ix + num_voxels_[0] * iy
-                   + num_voxels_[0] * num_voxels_[1] * iz;
+    int copyID = ix + num_voxels_[0] * (iy + num_voxels_[1] * iz);
     std::size_t matIndex = material_indices_[copyID];
     G4Material* mate = materials_[matIndex];
 
@@ -40,18 +39,18 @@ VoxelParameterisation::ComputeMaterial(G4VPhysicalVolume* physVol,
     return mate;
 }
 
-G4int VoxelParameterisation::GetNumberOfMaterials() const
+int VoxelParameterisation::GetNumberOfMaterials() const
 {
     return materials_.size();
 }
 
-G4Material* VoxelParameterisation::GetMaterial(G4int i) const
+G4Material* VoxelParameterisation::GetMaterial(int i) const
 {
     return materials_[i];
 }
 
 void VoxelParameterisation::ComputeTransformation(
-    G4int const copyNo, G4VPhysicalVolume* physVol) const
+    int const copyNo, G4VPhysicalVolume* physVol) const
 {
     G4double z_offset = (2. * static_cast<double>(copyNo) + 1.) * half_dim_.z()
                         - half_dim_.z() * num_voxels_[2];
@@ -59,7 +58,7 @@ void VoxelParameterisation::ComputeTransformation(
 }
 
 void VoxelParameterisation::ComputeDimensions(G4Box& box,
-                                              G4int const,
+                                              int const,
                                               G4VPhysicalVolume const*) const
 {
     box.SetXHalfLength(half_dim_.x());
