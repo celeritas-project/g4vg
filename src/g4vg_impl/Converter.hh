@@ -59,6 +59,7 @@ class Converter
     std::unique_ptr<LogicalVolumeConverter> convert_lv_;
     std::unordered_set<VGLogicalVolume const*> built_daughters_;
     VecPv placed_volumes_;
+    result_type::VecPv nested_;
 
     VGLogicalVolume* build_with_daughters(G4LogicalVolume const* mother_g4lv);
 };

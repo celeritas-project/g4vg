@@ -9,6 +9,7 @@
 #include <G4LogicalVolume.hh>
 #include <G4Material.hh>
 #include <G4RunManager.hh>
+#include <G4VNestedParameterisation.hh>
 #include <VecGeom/management/GeoManager.h>
 #include <VecGeom/volumes/LogicalVolume.h>
 #include <VecGeom/volumes/PlacedVolume.h>
@@ -43,9 +44,12 @@ void TestResult::print_ref() const
          << repr(pv_name)
          << ";\n"
             "ref.copy_no = "
-         << repr(copy_no)
-         << ";\n"
-            "result.expect_eq(ref);\n"
+         << repr(copy_no) << ";\n";
+    if (!nested.empty())
+    {
+        cout << "ref.nested = " << repr(nested) << ";\n";
+    }
+    cout << "result.expect_eq(ref);\n"
             "/***** END REFERENCE RESULT *****/\n";
     // clang-format: on
 }
@@ -77,6 +81,7 @@ void TestResult::expect_eq(TestResult const& ref) const
     }
     EXPECT_EQ(pv_name, ref.pv_name) << repr(pv_name);
     EXPECT_EQ(copy_no, ref.copy_no) << repr(copy_no);
+    EXPECT_EQ(nested, ref.nested) << repr(nested);
 }
 
 //---------------------------------------------------------------------------//
@@ -201,6 +206,25 @@ void TestBase::run_impl(Options const& options, TestResult& result)
         // Save VecGeom copy number (may differ from single G4 volume if it's a
         // "stamped" instance of a replica/parameterised volume)
         result.copy_no.push_back(vgpv->GetCopyNo());
+    }
+
+    // Process nested volume
+    for (auto* g4pv : converted.nested_pv)
+    {
+        ASSERT_TRUE(g4pv);
+        std::ostringstream os;
+
+        os << g4pv->GetName() << ':';
+        if (auto* nested = dynamic_cast<G4VNestedParameterisation*>(
+                g4pv->GetParameterisation()))
+        {
+            os << nested->GetNumberOfMaterials();
+        }
+        else
+        {
+            os << "ERROR";
+        }
+        result.nested.push_back(std::move(os).str());
     }
 }
 
