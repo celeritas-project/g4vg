@@ -13,6 +13,7 @@
 #include <G4LogicalVolumeStore.hh>
 #include <G4ReflectionFactory.hh>
 #include <G4ReplicaNavigation.hh>
+#include <G4VNestedParameterisation.hh>
 #include <G4VPVParameterisation.hh>
 #include <G4VPhysicalVolume.hh>
 #include <VecGeom/management/ReflFactory.h>
@@ -270,6 +271,7 @@ auto Converter::operator()(arg_type g4world) -> result_type
     result.world = world_pv;
     result.logical_volumes = convert_lv_->make_volume_map();
     result.physical_volumes = std::move(placed_volumes_);
+    result.nested_pv = std::move(nested_);
 
     G4VG_ENSURE(result.world);
     G4VG_ENSURE(!result.logical_volumes.empty());
@@ -336,11 +338,24 @@ auto Converter::build_with_daughters(G4LogicalVolume const* mother_g4lv)
             case EVolume::kParameterised:
                 // Place each paramterized instance of the daughter
                 G4VG_ASSERT(g4pv->GetParameterisation());
+                if (auto* nested = dynamic_cast<G4VNestedParameterisation*>(
+                        g4pv->GetParameterisation()))
+                {
+                    G4VG_LOG(warning)
+                        << "Encountered nested parameterisation '"
+                        << TypeDemangler<G4VNestedParameterisation>{}(*nested)
+                        << "' for physical volume '" << g4pv->GetName()
+                        << "' (corresponding LV: "
+                        << PrintableLV{g4pv->GetLogicalVolume()} << "): "
+                        << "only one instance will be placed, and "
+                           "solid/material changes will be ignored";
+                    nested_.push_back(g4pv);
+                }
                 place_daughter(g4pv, ParamUpdater{g4pv->GetParameterisation()});
                 break;
             default:
                 G4VG_LOG(error)
-                    << "Unsupported type '"
+                    << "Unsupported custom placement type '"
                     << TypeDemangler<G4VPhysicalVolume>{}(*g4pv)
                     << "' for physical volume '" << g4pv->GetName()
                     << "' (corresponding LV: "

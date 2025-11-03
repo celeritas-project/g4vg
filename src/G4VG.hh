@@ -81,12 +81,19 @@ struct Options
        g4pv->SetCopyNo(copy_no);
    }
  * \endcode
+ *
+ * For some applications (especially medical physics), a multi-level
+ * parameterisation can be used to create a 3-D array of voxels. VecGeom only
+ creates a single
+ * volume placement in this case, but it returns a reference to the placed
+ volume and the associated parameterisation.
  */
 struct Converted
 {
     using VGPlacedVolume = vecgeom::VPlacedVolume;
     using VecLv = std::vector<G4LogicalVolume const*>;
     using VecPv = std::vector<G4VPhysicalVolume const*>;
+    using PlacedVolumeId = unsigned int;
 
     //! World pointer (host) corresponding to input Geant4 world
     VGPlacedVolume* world{nullptr};
@@ -95,6 +102,8 @@ struct Converted
     VecLv logical_volumes;
     //! Geant4 PVs indexed by VecGeom PlacedVolume ID
     VecPv physical_volumes;
+    //! Encountered volumes that have unsupported nested parameterisations
+    VecPv nested_pv;
 };
 
 //---------------------------------------------------------------------------//

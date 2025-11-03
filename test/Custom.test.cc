@@ -306,8 +306,7 @@ G4VPhysicalVolume* NestedReplicaParametrizationTest::build_world()
 
 TEST_F(NestedReplicaParametrizationTest, default_options)
 {
-    auto result = this->run(Options{});
-    result.print_ref();
+    auto result = this->run(Options{.verbose = true});
 
     TestResult ref;
     ref.lv_name = {
@@ -352,6 +351,7 @@ TEST_F(NestedReplicaParametrizationTest, default_options)
         1,
         0,
     };
+    ref.nested = {"voxel:8"};
 
     result.expect_eq(ref);
 }

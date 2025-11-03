@@ -25,6 +25,7 @@ struct TestResult
     std::vector<double> solid_capacity;
     std::vector<std::string> pv_name;
     std::vector<int> copy_no;
+    std::vector<std::string> nested;
 
     void print_ref() const;
     void expect_eq(TestResult const& reference) const;
