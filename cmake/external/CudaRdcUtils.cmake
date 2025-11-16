@@ -120,9 +120,24 @@ relocatable device code and most importantly linking against those libraries.
 
   See ``set_target_properties`` for additional detail.
 
+.. command:: cuda_rdc_target_sources
+
+    Add sources to a target.
+
+     ::
+    cuda_rdc_target_sources(<target>
+         <INTERFACE|PUBLIC|PRIVATE> [items1...]
+         [<INTERFACE|PUBLIC|PRIVATE> [items2...] ...])
+
+  In the case that the new list of sources contains CUDA code, turns the target
+  to an RDC target.  Otherwise decays to ``target_sources``
+
+  See ``target_sources`` for additional detail.
+
+
 #]=======================================================================]
 
-set(_CUDA_RDC_VERSION 4)
+set(_CUDA_RDC_VERSION 13)
 if(CUDA_RDC_VERSION GREATER _CUDA_RDC_VERSION)
   # A newer version has already been loaded
   message(VERBOSE "Ignoring CUDA_RDC_VERSION ${_CUDA_RDC_VERSION}: "
@@ -187,6 +202,69 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 else()
   set(CMAKE_CXX_LINK_LIBRARY_USING_no_as_needed_SUPPORTED FALSE)
 endif()
+
+# Check if the compiler/linker supports -Wl,-z,undefs flag
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  include(CheckLinkerFlag)
+  check_linker_flag(CXX "LINKER:-z,undefs" CUDA_RDC_LINKER_SUPPORTS_Z_UNDEFS)
+  if(CUDA_RDC_LINKER_SUPPORTS_Z_UNDEFS)
+    message(VERBOSE "Linker supports \"-z undefs\" flag")
+  else()
+    message(VERBOSE "Linker does not support \"-z undefs\" flag")
+  endif()
+  check_linker_flag(CXX "LINKER:--allow-shlib-undefined" CUDA_RDC_LINKER_SUPPORTS_ALLOW_SHLIB_UNDEFINED)
+  if(CUDA_RDC_LINKER_SUPPORTS_ALLOW_SHLIB_UNDEFINED)
+    message(VERBOSE "Linker supports \"--allow-shlib-undefined\" flag")
+  else()
+    message(VERBOSE "Linker does not support \"--allow-shlib-undefined\" flag")
+  endif()
+endif()
+
+# On Linux, sanitize global shared linker flags to avoid enforcing no-undefined, which
+# conflicts with CUDA RDC split libraries (middle). This keeps builds compatible
+# when toolchains or parent projects inject these flags.
+
+# Helper macro to sanitize a linker flags variable
+# Remove common forms of no-undefined
+macro(_cuda_rdc_sanitize_linker_flags _var_name)
+  if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    if(DEFINED ${_var_name} AND NOT ${_var_name} STREQUAL "")
+      # Store original value in a backup variable for potential restoration
+      set(_CUDA_RDC_ORIG_${_var_name} "${${_var_name}}")
+      set(_filtered_flags "${${_var_name}}")
+      # Remove common forms of no-undefined
+      string(REGEX REPLACE "(^|[ \t])-Wl,--no-undefined([ \t]|$)" " " _filtered_flags "${_filtered_flags}")
+      string(REGEX REPLACE "(^|[ \t])--no-undefined([ \t]|$)" " " _filtered_flags "${_filtered_flags}")
+      string(REGEX REPLACE "(^|[ \t])-Wl,-z,defs([ \t]|$)" " " _filtered_flags "${_filtered_flags}")
+      string(REGEX REPLACE "(^|[ \t])-z[ ,]defs([ \t]|$)" " " _filtered_flags "${_filtered_flags}")
+      # Also tolerate the misspelled form sometimes used (no-defined)
+      string(REGEX REPLACE "(^|[ \t])-Wl,--no-defined([ \t]|$)" " " _filtered_flags "${_filtered_flags}")
+      string(REGEX REPLACE "(^|[ \t])--no-defined([ \t]|$)" " " _filtered_flags "${_filtered_flags}")
+      # Normalize whitespace
+      string(REGEX REPLACE "[ \t]+" " " _filtered_flags "${_filtered_flags}")
+      string(STRIP "${_filtered_flags}" _filtered_flags)
+      if(NOT _filtered_flags STREQUAL "${_CUDA_RDC_ORIG_${_var_name}}")
+        # Update cache so the change persists if the flag was provided via cache/toolchain
+        set(${_var_name} "${_filtered_flags}" CACHE STRING "Linker flags updated by cuda_rdc function" FORCE)
+        message(WARNING "Sanitized ${_var_name}: '${_CUDA_RDC_ORIG_${_var_name}}' -> '${_filtered_flags}'")
+      endif()
+    endif()
+  endif()
+endmacro()
+
+# Function to sanitize all relevant shared linker flags
+function(cuda_rdc_sanitize_shared_linker_flags)
+  # Sanitize base shared linker flags
+  _cuda_rdc_sanitize_linker_flags(CMAKE_SHARED_LINKER_FLAGS)
+
+  # Sanitize current build type flags if defined
+  if(DEFINED CMAKE_BUILD_TYPE AND NOT CMAKE_BUILD_TYPE STREQUAL "")
+    string(TOUPPER "${CMAKE_BUILD_TYPE}" _build_type_upper)
+    _cuda_rdc_sanitize_linker_flags(CMAKE_SHARED_LINKER_FLAGS_${_build_type_upper})
+  endif()
+endfunction()
+
+
 
 ##############################################################################
 # Separate the OPTIONS out from the sources
@@ -427,6 +505,11 @@ function(cuda_rdc_add_library target)
 
   ## MIDDLE (main library) ##
 
+  # Remove no-undefined from shared linker flags
+  if(NOT CUDA_RDC_LINKER_SUPPORTS_Z_UNDEFS)
+    cuda_rdc_sanitize_shared_linker_flags()
+  endif()
+
   add_library(${target} ${_lib_requested_type}
     $<TARGET_OBJECTS:${target}_objects>
   )
@@ -442,8 +525,15 @@ function(cuda_rdc_add_library target)
     ${_common_props}
     CUDA_RDC_LIBRARY_TYPE Shared
     CUDA_RESOLVE_DEVICE_SYMBOLS OFF # We really don't want nvlink called.
-    EXPORT_PROPERTIES "CUDA_RDC_LIBRARY_TYPE;CUDA_RDC_FINAL_LIBRARY;CUDA_RDC_MIDDLE_LIBRARY;CUDA_RDC_STATIC_LIBRARY"
+    EXPORT_PROPERTIES "CUDA_RUNTIME_LIBRARY;CUDA_RDC_LIBRARY_TYPE;CUDA_RDC_FINAL_LIBRARY;CUDA_RDC_MIDDLE_LIBRARY;CUDA_RDC_STATIC_LIBRARY"
   )
+
+  if(CUDA_RDC_LINKER_SUPPORTS_ALLOW_SHLIB_UNDEFINED)
+    target_link_options(${target} PRIVATE LINKER:--allow-shlib-undefined)
+  endif()
+  if(CUDA_RDC_LINKER_SUPPORTS_Z_UNDEFS)
+    target_link_options(${target} PRIVATE LINKER:-z,undefs)
+  endif()
 
   ## STATIC ##
 
@@ -454,7 +544,7 @@ function(cuda_rdc_add_library target)
     set_target_properties(${target}${_staticsuf} PROPERTIES
       ${_common_props}
       CUDA_RDC_LIBRARY_TYPE Static
-      EXPORT_PROPERTIES "CUDA_RDC_LIBRARY_TYPE;CUDA_RDC_FINAL_LIBRARY;CUDA_RDC_MIDDLE_LIBRARY;CUDA_RDC_STATIC_LIBRARY"
+      EXPORT_PROPERTIES "CUDA_RUNTIME_LIBRARY;CUDA_RDC_LIBRARY_TYPE;CUDA_RDC_FINAL_LIBRARY;CUDA_RDC_MIDDLE_LIBRARY;CUDA_RDC_STATIC_LIBRARY"
     )
   endif()
 
@@ -480,7 +570,7 @@ function(cuda_rdc_add_library target)
     LINK_DEPENDS $<TARGET_FILE:${target}${_staticsuf}>
     CUDA_RDC_LIBRARY_TYPE Final
     CUDA_RESOLVE_DEVICE_SYMBOLS ON
-    EXPORT_PROPERTIES "CUDA_RDC_LIBRARY_TYPE;CUDA_RDC_FINAL_LIBRARY;CUDA_RDC_MIDDLE_LIBRARY;CUDA_RDC_STATIC_LIBRARY"
+    EXPORT_PROPERTIES "CUDA_RUNTIME_LIBRARY;CUDA_RDC_LIBRARY_TYPE;CUDA_RDC_FINAL_LIBRARY;CUDA_RDC_MIDDLE_LIBRARY;CUDA_RDC_STATIC_LIBRARY"
   )
   target_link_libraries(${target}_final PUBLIC ${target})
   if(TARGET CUDA::toolkit)
@@ -539,7 +629,7 @@ endfunction()
 # the 4 libraries (objects, static, middle, final) libraries needed
 # for a separatable CUDA library
 function(cuda_rdc_target_compile_options target)
-  if(NOT CELERITAS_USE_CUDA)
+  if(NOT CMAKE_CUDA_COMPILER)
     target_compile_options(${ARGV})
     return()
   endif()
@@ -720,7 +810,7 @@ function(cuda_rdc_use_middle_lib_in_property target property)
   set(_new_values)
   foreach(_lib IN LISTS _target_libs)
     set(_newlib ${_lib})
-    # Simplistic treatement of `$<LINK_ONLY:...>`
+    # Simplistic treatment of `$<LINK_ONLY:...>`
     string(REGEX REPLACE "\\\$<LINK_ONLY:(.*)>" "\\1" _stripped_lib ${_lib})
     if(_stripped_lib STREQUAL _lib)
       set(_stripped_lib)
@@ -817,7 +907,10 @@ endfunction()
 #
 #  Check which CUDA runtime is needed for a given (dependent) library.
 function(cuda_rdc_check_cuda_runtime OUTVAR library)
-
+  if(NOT TARGET ${library})
+    set(${OUTVAR} "None" PARENT_SCOPE)
+    return()
+  endif()
   get_target_property(_runtime_setting ${library} CUDA_RUNTIME_LIBRARY)
   if(NOT _runtime_setting)
     # We could get more exact information by using:
@@ -826,21 +919,23 @@ function(cuda_rdc_check_cuda_runtime OUTVAR library)
     #   You have used file(GET_RUNTIME_DEPENDENCIES) in project mode.  This is
     #     probably not what you intended to do.
     # On the other hand, if the library is using (relocatable) CUDA code and
-    # the shared run-time library and we don't have the scafolding libraries
+    # the shared run-time library and we don't have the scaffolding libraries
     # (shared/static/final) then this won't work well. i.e. if we were to detect this
     # case we probably need to 'error out'.
-    get_target_property(_cuda_library_type ${library} CUDA_RDC_LIBRARY_TYPE)
-    get_target_property(_cuda_find_library ${library} CUDA_RDC_FINAL_LIBRARY)
-    if(_cuda_library_type STREQUAL "Shared")
-      set_target_properties(${library} PROPERTIES CUDA_RUNTIME_LIBRARY "Shared")
-      set(_runtime_setting "Shared")
-    elseif(NOT _cuda_find_library)
+    get_target_property(_cuda_middle_library ${library} CUDA_RDC_MIDDLE_LIBRARY)
+    get_target_property(_cuda_static_library ${library} CUDA_RDC_STATIC_LIBRARY)
+    if(_cuda_middle_library AND _cuda_static_library)
+      # We could also check that _cuda_middle_library's "target_type" is STATIC_LIBRARY
+      if(_cuda_static_library STREQUAL _cuda_middle_library)
+        set_target_properties(${library} PROPERTIES CUDA_RUNTIME_LIBRARY "Static")
+        set(_runtime_setting "Static")
+      else()
+        set_target_properties(${library} PROPERTIES CUDA_RUNTIME_LIBRARY "Shared")
+        set(_runtime_setting "Shared")
+      endif()
+    else()
       set_target_properties(${library} PROPERTIES CUDA_RUNTIME_LIBRARY "None")
       set(_runtime_setting "None")
-    else()
-      # If we have a final library then the library is shared.
-      set_target_properties(${library} PROPERTIES CUDA_RUNTIME_LIBRARY "Shared")
-      set(_runtime_setting "Shared")
     endif()
   endif()
 
@@ -900,8 +995,16 @@ function(cuda_rdc_target_link_libraries target)
       if(${_final_count} GREATER 0)
         # If there is at least one final library this means that we
         # have somewhere some "separable" nvcc compilations
+        # In the case where we have:
+        #    add_executable(name source.cxx)
+        #    cuda_rdc_target_ink_library(name rdc_lib1)
+        #    target_sources(name source.cu)
+        #    cuda_rdc_target_ink_library(name rdc_lib2)
+        # We would have set to OFF and the target_sources did not
+        # turn it back on
         set_target_properties(${target} PROPERTIES
           CUDA_SEPARABLE_COMPILATION ON
+          CUDA_RESOLVE_DEVICE_SYMBOLS ON
         )
       endif()
     elseif(${_final_count} EQUAL 1)
@@ -917,14 +1020,32 @@ function(cuda_rdc_target_link_libraries target)
       get_target_property(_final_target_type ${_finallibs} TYPE)
 
       get_target_property(_final_runtime ${_finallibs} CUDA_RUNTIME_LIBRARY)
+      set(_cuda_runtime_target CUDA::cudart_static)
       if(_final_runtime STREQUAL "Shared")
+        set(_cuda_runtime_target CUDA::cudart)
         set_target_properties(${target} PROPERTIES CUDA_RUNTIME_LIBRARY "Shared")
       endif()
 
       if(_final_target_type STREQUAL "STATIC_LIBRARY")
         # for static libraries we need to list the libraries a second time (to resolve symbol from the final library)
         get_target_property(_current_link_libraries ${target} LINK_LIBRARIES)
-        set_property(TARGET ${target} PROPERTY LINK_LIBRARIES ${_current_link_libraries} ${_finallibs} ${_current_link_libraries} )
+        # Gather all the dependent static libraries, especially the cuda RDC libraries.
+        # We need to list them twice (once in reverse order, once in the right order)
+        # to fully resolve all the (CUDA RDC) symbols.
+        cuda_rdc_cuda_gather_dependencies(_flat_list_linked_libs ${target})
+        foreach(_dep_lib IN LISTS _flat_list_linked_libs)
+          cuda_rdc_strip_alias(_alias_dep_lib ${_dep_lib})
+          if(TARGET ${_alias_dep_lib})
+            get_target_property(_target_type ${_alias_dep_lib} TYPE)
+            get_target_property(_middle_lib ${_alias_dep_lib} CUDA_RDC_MIDDLE_LIBRARY)
+            if(_target_type STREQUAL "STATIC_LIBRARY")
+              list(APPEND _short_flat_list_linked_libs ${_dep_lib})
+            endif()
+          endif()
+        endforeach()
+        set(_reverse_flat_list_linked_libs ${_short_flat_list_linked_libs})
+        list(REVERSE _reverse_flat_list_linked_libs)
+        set_property(TARGET ${target} PROPERTY LINK_LIBRARIES ${_reverse_flat_list_linked_libs} ${_short_flat_list_linked_libs} ${_finallibs} ${_current_link_libraries} ${_cuda_runtime_target})
       else()
         # We could have used:
         #    target_link_libraries(${target} PUBLIC ${_finallibs})
@@ -935,7 +1056,7 @@ function(cuda_rdc_target_link_libraries target)
         #     if(ARGV1 MATCHES "^(PRIVATE|PUBLIC|INTERFACE)$")
         # or simply keep the following:
         get_target_property(_current_link_libraries ${target} LINK_LIBRARIES)
-        set_property(TARGET ${target} PROPERTY LINK_LIBRARIES ${_current_link_libraries} "$<LINK_LIBRARY:rdc_no_as_needed,${_finallibs}>" )
+        set_property(TARGET ${target} PROPERTY LINK_LIBRARIES ${_current_link_libraries} "$<LINK_LIBRARY:rdc_no_as_needed,${_finallibs}>" ${_cuda_runtime_target})
       endif()
     elseif(${_final_count} GREATER 1)
       # turn into CUDA executable.
@@ -970,19 +1091,22 @@ function(cuda_rdc_target_link_libraries target)
           set(_need_to_use_shared_runtime TRUE)
         endif()
         if(NOT _first_lib_runtime_setting AND NOT _lib_runtime_setting STREQUAL "None")
-         set(_first_lib_runtime_setting ${_lib_runtime_setting})
-         set(_first_lib ${_lib})
+          set(_first_lib_runtime_setting ${_lib_runtime_setting})
+          set(_first_lib ${_lib})
+          # We need to match the dependent library since we can not change it.
+          if(NOT _current_runtime_setting OR NOT _current_runtime_setting STREQUAL _first_lib_runtime_setting)
+            set_target_properties(${target} PROPERTIES CUDA_RUNTIME_LIBRARY ${_lib_runtime_setting})
+            set(_current_runtime_setting ${_lib_runtime_setting})
+          endif()
         elseif(_lib_runtime_setting AND NOT (_first_lib_runtime_setting STREQUAL _lib_runtime_setting)
                AND NOT _lib_runtime_setting STREQUAL "None")
+          # Case where we encounter 2 dependent library with different runtime requirement, we can not
+          # match both.
           message(FATAL_ERROR "The CUDA runtime used for ${_lib} [${_lib_runtime_setting}] is different from the one used by ${_first_lib}  [${_first_lib_runtime_setting}]")
         endif()
-        # We need to match the dependent library since we can not change it.
-        if(NOT _current_runtime_setting AND NOT _lib_runtime_setting STREQUAL "None")
-          set_target_properties(${target} PROPERTIES CUDA_RUNTIME_LIBRARY ${_lib_runtime_setting})
-          set(_current_runtime_setting ${_lib_runtime_setting})
-        endif()
         get_target_property(_libstatic ${_lib} CUDA_RDC_STATIC_LIBRARY)
-        if(_target_type STREQUAL "EXECUTABLE")
+        # If ${_libstatic} is a TARGET we have a RDC library.
+        if(_target_type STREQUAL "EXECUTABLE" AND TARGET ${_libstatic})
            # We need to explicit list the RDC library without the compiler might complain with:
            #    error adding symbols: DSO missing from command line
            # This DSO missing from command line message will be displayed when the linker
@@ -1047,11 +1171,61 @@ function(cuda_rdc_target_link_libraries target)
         # and the current one is Shared.
         if(${_need_to_use_shared_runtime})
           set_target_properties(${target} PROPERTIES CUDA_RUNTIME_LIBRARY "Shared")
+          target_link_libraries(${target} PRIVATE CUDA::cudart)
         endif()
       endif()
     endif()
   endif()
 
+endfunction()
+
+#-----------------------------------------------------------------------------#
+#
+# Replacement for the target_sources function that is aware of the 3 libraries
+# (static, middle, final) libraries needed for a separatable CUDA library
+# and can update the library type to RDC if needed
+#
+function(cuda_rdc_target_sources target)
+  if(NOT CMAKE_CUDA_COMPILER)
+    target_sources(${ARGV})
+    return()
+  endif()
+
+  # Note: alias target are not supported by target_sources
+  cuda_rdc_lib_contains_cuda(_contains_cuda ${target})
+
+  if(_contains_cuda)
+    get_target_property(_targettype ${target} CUDA_RDC_LIBRARY_TYPE)
+    if(_targettype)
+      get_target_property(_target_object ${target} CUDA_RDC_OBJECT_LIBRARY)
+      if (_target_object)
+        target_sources(${_target_object} ${ARGN})
+        return()
+      endif()
+    endif()
+  endif()
+
+  target_sources(${target} ${ARGN})
+  # Try again with the new sources
+  cuda_rdc_lib_contains_cuda(_contains_cuda ${target})
+  if(_contains_cuda)
+    # Because _contains_cuda, CUDA_RDC_LIBRARY_TYPE or CUDA_RDC_OBJECT_LIBRARY was not
+    # set, we know the target is not yet a separatable CUDA library/executable.
+
+    get_target_property(_target_type ${target} TYPE)
+    if(_target_type STREQUAL "EXECUTABLE")
+      # If we have a source file, we need to turn the target into a CUDA target
+      # to be able to use the CUDA compiler.
+      set_target_properties(${target} PROPERTIES
+        CUDA_SEPARABLE_COMPILATION ON
+        CUDA_RESOLVE_DEVICE_SYMBOLS ON
+      )
+    else()
+      message(FATAL_ERROR "The target ${target} is a ${_target_type} and we can not add"
+        " CUDA sources through `target_sources`.  Add the CUDA sources at the initial"
+        " creation, for example at the time of the `add_library`")
+    endif()
+  endif()
 endfunction()
 
 #-----------------------------------------------------------------------------#
