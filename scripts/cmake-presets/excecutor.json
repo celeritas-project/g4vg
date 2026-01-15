@@ -26,7 +26,7 @@
     },
     {
       "name": "base",
-      "displayName": "Goldfinger default options",
+      "displayName": "Executor default options",
       "inherits": [".base", ".debug", "default"],
       "binaryDir": "${sourceDir}/build",
       "cacheVariables": {
