@@ -9,6 +9,7 @@
       "binaryDir": "${sourceDir}/build-${presetName}",
       "generator": "Ninja",
       "cacheVariables": {
+        "G4VG_CGV_CACHE": "",
         "CMAKE_INSTALL_PREFIX": "${sourceDir}/install-${presetName}"
       }
     },
@@ -46,8 +47,13 @@
       "cacheVariables": {
         "BUILD_SHARED_LIBS":{"type": "BOOL", "value": "ON"},
         "G4VG_DEBUG":{"type": "BOOL", "value": "ON"},
-        "CMAKE_BUILD_TYPE":     {"type": "STRING", "value": "Debug"}
+        "CMAKE_BUILD_TYPE": {"type": "STRING", "value": "Debug"}
       }
+    },
+    {
+      "name": "dev",
+      "description": "Build for standard development",
+      "inherits": [".debug"]
     }
   ],
   "buildPresets": [

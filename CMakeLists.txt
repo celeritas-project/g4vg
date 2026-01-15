@@ -29,7 +29,7 @@ endmacro()
 # Options
 
 option(G4VG_BUILD_TESTS "Build G4VG unit tests" OFF)
-option(G4VG_DEBUG "Add runtime assertions" ON)
+option(G4VG_DEBUG "Add runtime assertions" OFF)
 g4vg_set_default(BUILD_TESTING ${G4VG_BUILD_TESTS})
 
 g4vg_set_default(BUILD_SHARED_LIBS ON)
