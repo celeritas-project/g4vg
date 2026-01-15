@@ -20,6 +20,15 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 include(GNUInstallDirs)
 
+#----------------------------------------------------------------------------#
+# Options
+
+option(G4VG_BUILD_TESTS "Build G4VG unit tests" OFF)
+option(G4VG_DEBUG "Add runtime assertions" OFF)
+
+#----------------------------------------------------------------------------#
+# CMake Defaults
+
 macro(g4vg_set_default name value)
   if(NOT DEFINED ${name})
     message(VERBOSE "G4VG: set default ${name}=${value}")
@@ -27,13 +36,18 @@ macro(g4vg_set_default name value)
   endif()
 endmacro()
 
-#----------------------------------------------------------------------------#
-# Options
+# Default to debug or released based on value of G4VG_DEBUG
+if(DEFINED CMAKE_BUILD_TYPE AND NOT CMAKE_BUILD_TYPE)
+  if(G4VG_DEBUG)
+    set(_default_build_type "Debug")
+  else()
+    set(_default_build_type "Release")
+  endif()
+  set(CMAKE_BUILD_TYPE "${_default_build_type}" CACHE STRING "Build type" FORCE)
+  message(STATUS "Set default CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
+endif()
 
-option(G4VG_BUILD_TESTS "Build G4VG unit tests" OFF)
-option(G4VG_DEBUG "Add runtime assertions" OFF)
 g4vg_set_default(BUILD_TESTING ${G4VG_BUILD_TESTS})
-
 g4vg_set_default(BUILD_SHARED_LIBS ON)
 g4vg_set_default(CMAKE_CXX_EXTENSIONS OFF)
 
