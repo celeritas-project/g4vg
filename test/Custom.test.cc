@@ -16,11 +16,17 @@
 #include <G4PVParameterised.hh>
 #include <G4PVPlacement.hh>
 #include <G4PVReplica.hh>
+#include <G4QuadrangularFacet.hh>
 #include <G4SolidStore.hh>
 #include <G4SystemOfUnits.hh>
+#include <G4TessellatedSolid.hh>
 #include <G4ThreeVector.hh>
+#include <G4TriangularFacet.hh>
 #include <G4VPhysicalVolume.hh>
 #include <G4VTouchable.hh>
+#include <VecGeom/base/Vector3D.h>
+#include <VecGeom/management/GeoManager.h>
+#include <VecGeom/volumes/PlacedVolume.h>
 #include <gtest/gtest.h>
 
 #include "G4VG.hh"
@@ -112,6 +118,81 @@ TEST_F(DisplacedTestBase, default_options)
     ref.solid_capacity[2] = 0;
     result.solid_capacity[2] = 0;
     result.expect_eq(ref);
+}
+
+//---------------------------------------------------------------------------//
+class TessellatedSolidTest : public CustomTestBase
+{
+  protected:
+    std::string basename() const final { return "tessellated"; }
+    G4VPhysicalVolume* build_world() final;
+};
+
+G4VPhysicalVolume* TessellatedSolidTest::build_world()
+{
+    G4Material* mat = G4NistManager::Instance()->FindOrBuildMaterial("G4_AIR");
+
+    auto* world_s = new G4Box("world_solid", 100, 100, 100);
+    auto* world_l = new G4LogicalVolume(world_s, mat, "world");
+    auto* world_p = new G4PVPlacement(G4Transform3D{},
+                                      world_l,
+                                      "world_pv",
+                                      /* parent = */ nullptr,
+                                      /* many = */ false,
+                                      /* copy_no = */ 0);
+
+    constexpr double h = 25.0;
+    G4ThreeVector const v000(-h, -h, -h);
+    G4ThreeVector const v100(h, -h, -h);
+    G4ThreeVector const v110(h, h, -h);
+    G4ThreeVector const v010(-h, h, -h);
+    G4ThreeVector const v001(-h, -h, h);
+    G4ThreeVector const v101(h, -h, h);
+    G4ThreeVector const v111(h, h, h);
+    G4ThreeVector const v011(-h, h, h);
+
+    auto* tess_s = new G4TessellatedSolid("tessellated_solid");
+    tess_s->AddFacet(new G4TriangularFacet(v000, v010, v110, ABSOLUTE));
+    tess_s->AddFacet(new G4TriangularFacet(v000, v110, v100, ABSOLUTE));
+    tess_s->AddFacet(new G4TriangularFacet(v001, v101, v111, ABSOLUTE));
+    tess_s->AddFacet(new G4TriangularFacet(v001, v111, v011, ABSOLUTE));
+    tess_s->AddFacet(new G4QuadrangularFacet(v000, v001, v011, v010, ABSOLUTE));
+    tess_s->AddFacet(new G4QuadrangularFacet(v100, v110, v111, v101, ABSOLUTE));
+    tess_s->AddFacet(new G4QuadrangularFacet(v000, v100, v101, v001, ABSOLUTE));
+    tess_s->AddFacet(new G4QuadrangularFacet(v010, v011, v111, v110, ABSOLUTE));
+    tess_s->SetSolidClosed(true);
+
+    auto* tess_l = new G4LogicalVolume(tess_s, mat, "tessellated");
+    new G4PVPlacement(/* rotation = */ nullptr,
+                      G4ThreeVector(),
+                      tess_l,
+                      "tessellated_pv",
+                      /* parent = */ world_l,
+                      /* many = */ false,
+                      /* copy_no = */ 0);
+
+    return world_p;
+}
+
+TEST_F(TessellatedSolidTest, absolute_vertices_are_preserved)
+{
+    auto converted
+        = g4vg::convert(this->g4world(), Options{.append_pointers = false});
+    ASSERT_TRUE(converted.world);
+
+    auto& vg_manager = vecgeom::GeoManager::Instance();
+    vg_manager.RegisterPlacedVolume(converted.world);
+    vg_manager.SetWorldAndClose(converted.world);
+
+    ASSERT_EQ(converted.world->GetDaughters().size(), 1);
+    auto const* tess = converted.world->GetDaughters()[0];
+    ASSERT_TRUE(tess);
+
+    using Vec = vecgeom::Vector3D<vecgeom::Precision>;
+    Vec const dir(1, 0, 0);
+
+    EXPECT_NEAR(tess->DistanceToIn(Vec(-80, 0, 0), dir), 55.0, 1e-12);
+    EXPECT_NEAR(tess->DistanceToOut(Vec(0, 0, 0), dir), 25.0, 1e-12);
 }
 
 //---------------------------------------------------------------------------//

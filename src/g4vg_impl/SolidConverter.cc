@@ -612,12 +612,13 @@ auto SolidConverter::tessellatedsolid(arg_type solid_base) -> result_type
 
         if (num_vtx == 3)
         {
-            result->AddTriangularFacet(vtx[0], vtx[1], vtx[2], ABSOLUTE);
+            result->AddTriangularFacet(
+                vtx[0], vtx[1], vtx[2], /* absolute = */ true);
         }
         else
         {
             result->AddQuadrilateralFacet(
-                vtx[0], vtx[1], vtx[2], vtx[3], ABSOLUTE);
+                vtx[0], vtx[1], vtx[2], vtx[3], /* absolute = */ true);
         }
     }
     result->Close();
