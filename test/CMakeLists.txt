@@ -18,7 +18,7 @@ add_library(g4vg_test_lib
   TestBase.cc
 )
 cuda_rdc_target_link_libraries(g4vg_test_lib PUBLIC
-  GTest::GTest GTest::gtest_main # For testing
+  GTest::gtest GTest::gtest_main # For testing
   G4VG::g4vg # Code to be tested
   VecGeom::vecgeom # To build and check VecGeom objects
   ${Geant4_LIBRARIES} # To set up and load Geant4
