@@ -6,6 +6,8 @@
 //---------------------------------------------------------------------------//
 #include "SolidConverter.hh"
 
+#include <cstdlib>
+#include <random>
 #include <string_view>
 #include <typeindex>
 #include <typeinfo>
@@ -26,6 +28,7 @@
 #include <G4IntersectionSolid.hh>
 #include <G4LogicalVolume.hh>
 #include <G4LogicalVolumeStore.hh>
+#include <G4MultiUnion.hh>
 #include <G4Navigator.hh>
 #include <G4Orb.hh>
 #include <G4PVDivision.hh>
@@ -64,6 +67,7 @@
 #include <VecGeom/volumes/UnplacedGenTrap.h>
 #include <VecGeom/volumes/UnplacedGenericPolycone.h>
 #include <VecGeom/volumes/UnplacedHype.h>
+#include <VecGeom/volumes/UnplacedMultiUnion.h>
 #include <VecGeom/volumes/UnplacedOrb.h>
 #include <VecGeom/volumes/UnplacedParaboloid.h>
 #include <VecGeom/volumes/UnplacedParallelepiped.h>
@@ -199,6 +203,7 @@ auto SolidConverter::convert_impl(arg_type solid_base) -> result_type
         VGSC_TYPE_FUNC(GenericTrap      , generictrap),
         VGSC_TYPE_FUNC(Hype             , hype),
         VGSC_TYPE_FUNC(IntersectionSolid, intersectionsolid),
+        VGSC_TYPE_FUNC(MultiUnion       , multiunion),
         VGSC_TYPE_FUNC(Orb              , orb),
         VGSC_TYPE_FUNC(Para             , para),
         VGSC_TYPE_FUNC(Paraboloid       , paraboloid),
@@ -721,6 +726,124 @@ auto SolidConverter::unionsolid(arg_type solid_base) -> result_type
     PlacedBoolVolumes pv = this->convert_bool_impl(
         dynamic_cast<G4BooleanSolid const&>(solid_base));
     return make_unplaced_boolean<kUnion>(pv[0], pv[1]);
+}
+
+//---------------------------------------------------------------------------//
+//! Convert a multi-union solid
+auto SolidConverter::multiunion(arg_type solid_base) -> result_type
+{
+    auto const& solid = dynamic_cast<G4MultiUnion const&>(solid_base);
+
+    // A G4MultiUnion's constituents may overlap, which VecGeom's
+    // UnplacedMultiUnion handles via its own BVH but a tree of binary
+    // booleans does not: overlapping constituents leave internal
+    // boundaries that the navigator reports as real surface crossings.
+    // Native mode is therefore the physically faithful conversion, but
+    // UnplacedMultiUnion has no working GPU copy (its nodes are not
+    // transferred), so the boolean tree is the only device-capable form.
+    // G4VG_MULTIUNION=native selects the faithful path (host only).
+    {
+        char const* mode = std::getenv("G4VG_MULTIUNION");
+        if (mode && std::string_view{mode} == "native")
+        {
+            auto* mu = GeoManager::MakeInstance<UnplacedMultiUnion>();
+            for (G4int i = 0, n = solid.GetNumberOfSolids(); i < n; ++i)
+            {
+                G4VSolid const* daughter = solid.GetSolid(i);
+                G4VG_ASSERT(daughter);
+                G4Transform3D const& tr = solid.GetTransformation(i);
+                G4RotationMatrix const rot = tr.getRotation().inverse();
+                mu->AddNode((*this)(*daughter),
+                            transform_(tr.getTranslation(), &rot));
+            }
+            mu->Close();
+            return mu;
+        }
+    }
+
+    G4int const imax = solid.GetNumberOfSolids();
+    G4VG_VALIDATE(imax >= 2,
+                  << "G4MultiUnion '" << solid.GetName() << "' has " << imax
+                  << " nodes; at least 2 are required");
+
+    std::vector<VPlacedVolume const*> placed;
+    placed.reserve(imax);
+    for (G4int i = 0; i < imax; ++i)
+    {
+        G4VSolid const* daughter = solid.GetSolid(i);
+        G4VG_ASSERT(daughter);
+        VUnplacedVolume const* converted = (*this)(*daughter);
+
+        // The stored node transformation is the active placement of the
+        // daughter in the multi-union frame; the transformer expects the
+        // Geant4 physical-volume convention (inverse rotation)
+        G4Transform3D const& tr = solid.GetTransformation(i);
+        G4RotationMatrix const rot = tr.getRotation().inverse();
+        G4ThreeVector const trans = tr.getTranslation();
+        Transformation3D const vgtr = transform_(trans, &rot);
+
+        std::string label
+            = make_temp_name(solid.GetName(), std::to_string(i).c_str());
+        label += '/';
+        label += daughter->GetName();
+        auto* temp_lv = new LogicalVolume(label.c_str(), converted);
+        placed.push_back(temp_lv->Place(&vgtr));
+    }
+
+    // Pairwise-reduce to keep the boolean nesting depth logarithmic
+    std::size_t level = 0;
+    while (placed.size() > 2)
+    {
+        std::vector<VPlacedVolume const*> next;
+        next.reserve(placed.size() / 2 + 1);
+        for (std::size_t i = 0; i + 1 < placed.size(); i += 2)
+        {
+            VUnplacedVolume* pair_union
+                = make_unplaced_boolean<kUnion>(placed[i], placed[i + 1]);
+            std::string label = make_temp_name(
+                solid.GetName(),
+                ("u" + std::to_string(level) + "_" + std::to_string(i)).c_str());
+            auto* temp_lv = new LogicalVolume(label.c_str(), pair_union);
+            next.push_back(temp_lv->Place(&Transformation3D::kIdentity));
+        }
+        if (placed.size() % 2 != 0)
+        {
+            next.push_back(placed.back());
+        }
+        placed = std::move(next);
+        ++level;
+    }
+    result_type result = make_unplaced_boolean<kUnion>(
+        placed[0], placed.size() > 1 ? placed[1] : placed[0]);
+
+    if (std::getenv("G4VG_DEBUG_MULTIUNION"))
+    {
+        // Compare containment against Geant4 on bounding-box sample points
+        // to catch transform-convention errors
+        G4ThreeVector lo, hi;
+        solid.BoundingLimits(lo, hi);
+        std::mt19937 rng{12345};
+        std::uniform_real_distribution<double> ux(lo.x(), hi.x());
+        std::uniform_real_distribution<double> uy(lo.y(), hi.y());
+        std::uniform_real_distribution<double> uz(lo.z(), hi.z());
+        int const n_total = 10000;
+        int n_mismatch = 0;
+        int n_inside = 0;
+        for (int j = 0; j < n_total; ++j)
+        {
+            G4ThreeVector p(ux(rng), uy(rng), uz(rng));
+            bool g4_in = (solid.Inside(p) == ::kInside);
+            bool vg_in = result->Contains(Vector3D<Precision>(
+                scale_(p.x()), scale_(p.y()), scale_(p.z())));
+            n_inside += static_cast<int>(g4_in);
+            n_mismatch += static_cast<int>(g4_in != vg_in);
+        }
+        G4VG_LOG(info) << "MultiUnion '" << solid.GetName()
+                       << "': " << n_inside << "/" << n_total
+                       << " points inside, " << n_mismatch
+                       << " containment mismatches";
+    }
+    return result;
 }
 
 //---------------------------------------------------------------------------//
