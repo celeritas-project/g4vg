@@ -15,6 +15,11 @@
 class G4LogicalVolume;
 class G4VPhysicalVolume;
 
+#include <VecGeom/base/Version.h>
+#if VECGEOM_VERSION >= 0x020300
+// Since VecGeom 2.3 the volume classes are memory-space templates: use its forward declarations
+#    include <VecGeom/volumes/VolumesFwd.h>
+#else
 namespace vecgeom
 {
 inline namespace cxx
@@ -23,6 +28,7 @@ class LogicalVolume;
 class VPlacedVolume;
 }  // namespace cxx
 }  // namespace vecgeom
+#endif
 
 //---------------------------------------------------------------------------//
 
