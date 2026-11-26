@@ -65,6 +65,8 @@ cuda_rdc_add_library(g4vg
   $<TARGET_OBJECTS:g4vg_impl>
 )
 cuda_rdc_target_link_libraries(g4vg
+  PUBLIC
+    VecGeom::vecgeom # G4VG.hh includes VecGeom headers
   PRIVATE
     g4vg_impl
 )
