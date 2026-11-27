@@ -24,7 +24,36 @@ cmake_policy(VERSION 3.10...3.31)
 include(CMakeFindDependencyMacro)
 
 find_dependency(Geant4 @Geant4_VERSION@ REQUIRED)
-find_dependency(VecGeom @VecGeom_VERSION@ REQUIRED)
+if(TARGET VecGeom::vecgeom)
+  # Imported earlier (its version variables may be out of scope): a second lookup would not replace its targets,
+  # so take its version from its own headers
+  set(_g4vg_vecgeom_version)
+  get_target_property(_g4vg_dirs VecGeom::vecgeom INTERFACE_INCLUDE_DIRECTORIES)
+  foreach(_g4vg_dir IN LISTS _g4vg_dirs)
+    if(NOT _g4vg_vecgeom_version AND EXISTS "${_g4vg_dir}/VecGeom/base/Version.h")
+      file(STRINGS "${_g4vg_dir}/VecGeom/base/Version.h" _g4vg_line
+        REGEX "^#define VECGEOM_VERSION 0x[0-9a-fA-F]+")
+      if(_g4vg_line MATCHES "0x([0-9a-fA-F][0-9a-fA-F])([0-9a-fA-F][0-9a-fA-F])([0-9a-fA-F][0-9a-fA-F])")
+        math(EXPR _g4vg_major "0x${CMAKE_MATCH_1}")
+        math(EXPR _g4vg_minor "0x${CMAKE_MATCH_2}")
+        math(EXPR _g4vg_patch "0x${CMAKE_MATCH_3}")
+        set(_g4vg_vecgeom_version "${_g4vg_major}.${_g4vg_minor}.${_g4vg_patch}")
+      endif()
+    endif()
+  endforeach()
+else()
+  find_dependency(VecGeom @VecGeom_VERSION@ REQUIRED)
+  set(_g4vg_vecgeom_version "${VecGeom_VERSION}")
+endif()
+# VecGeom 2.3 changed the volume types: a G4VG built with an older VecGeom cannot use it
+if(NOT _g4vg_vecgeom_version OR _g4vg_vecgeom_version VERSION_LESS "@VecGeom_VERSION@"
+   OR ("@VecGeom_VERSION@" VERSION_LESS 2.3 AND NOT _g4vg_vecgeom_version VERSION_LESS 2.3))
+  set(G4VG_FOUND FALSE)
+  set(G4VG_NOT_FOUND_MESSAGE
+    "G4VG was built with VecGeom @VecGeom_VERSION@, which is incompatible with VecGeom '${_g4vg_vecgeom_version}'")
+  cmake_policy(POP)
+  return()
+endif()
 
 cmake_policy(POP)
 
