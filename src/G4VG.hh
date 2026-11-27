@@ -15,21 +15,8 @@
 class G4LogicalVolume;
 class G4VPhysicalVolume;
 
-#include <VecGeom/base/Version.h>
-#if VECGEOM_VERSION >= 0x020300
-// Since VecGeom 2.3 the volume classes are memory-space templates: use its
-// forward declarations
-#    include <VecGeom/volumes/VolumesFwd.h>
-#else
-namespace vecgeom
-{
-inline namespace cxx
-{
-class LogicalVolume;
-class VPlacedVolume;
-}  // namespace cxx
-}  // namespace vecgeom
-#endif
+// VecGeom types, for the VecGeom version G4VG was built with
+#include "G4VGVecGeomFwd.hh"
 
 //---------------------------------------------------------------------------//
 
@@ -97,7 +84,7 @@ struct Options
  */
 struct Converted
 {
-    using VGPlacedVolume = vecgeom::VPlacedVolume;
+    using VGPlacedVolume = detail::VGPlacedVolume;
     using VecLv = std::vector<G4LogicalVolume const*>;
     using VecPv = std::vector<G4VPhysicalVolume const*>;
     using PlacedVolumeId = unsigned int;

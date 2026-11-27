@@ -1,0 +1,47 @@
+//------------------------------- -*- C++ -*- -------------------------------//
+// Copyright G4VG contributors: see top-level COPYRIGHT file for details
+// SPDX-License-Identifier: (Apache-2.0 OR MIT)
+//---------------------------------------------------------------------------//
+//! \file G4VGVecGeomFwd.hh
+//! \brief VecGeom types of the G4VG interface, declared for the VecGeom version
+//! G4VG was built with, so that clients need no VecGeom headers.
+//---------------------------------------------------------------------------//
+#pragma once
+
+#cmakedefine01 G4VG_VECGEOM_MEMSPACE_TEMPLATES
+
+#if G4VG_VECGEOM_MEMSPACE_TEMPLATES
+// Since VecGeom 2.3 the volume classes are templates on the memory space
+// (host = 0)
+namespace vecgeom
+{
+enum class MemSpace;
+template<MemSpace M>
+class VPlacedVolumeT;
+}  // namespace vecgeom
+
+namespace g4vg
+{
+namespace detail
+{
+using VGPlacedVolume
+    = vecgeom::VPlacedVolumeT<static_cast<vecgeom::MemSpace>(0)>;
+}  // namespace detail
+}  // namespace g4vg
+#else
+namespace vecgeom
+{
+inline namespace cxx
+{
+class VPlacedVolume;
+}  // namespace cxx
+}  // namespace vecgeom
+
+namespace g4vg
+{
+namespace detail
+{
+using VGPlacedVolume = vecgeom::cxx::VPlacedVolume;
+}  // namespace detail
+}  // namespace g4vg
+#endif
