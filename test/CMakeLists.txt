@@ -9,6 +9,10 @@ include(GoogleTest)
 # - Raw link test
 add_executable(g4vg_link_test G4VG.link.test.cc)
 cuda_rdc_target_link_libraries(g4vg_link_test PRIVATE G4VG::g4vg)
+# - Public header with the usage requirements of G4VG::g4vg only, which do not
+#   include VecGeom (no RDC helper adding it)
+add_library(g4vg_header_test OBJECT G4VG.link.test.cc)
+target_link_libraries(g4vg_header_test PRIVATE G4VG::g4vg)
 
 # - Primary code test
 file(TO_CMAKE_PATH "${PROJECT_SOURCE_DIR}" G4VG_SOURCE_DIR)

@@ -15,14 +15,8 @@
 class G4LogicalVolume;
 class G4VPhysicalVolume;
 
-namespace vecgeom
-{
-inline namespace cxx
-{
-class LogicalVolume;
-class VPlacedVolume;
-}  // namespace cxx
-}  // namespace vecgeom
+// VecGeom types, for the VecGeom version G4VG was built with
+#include "G4VGVecGeomFwd.hh"
 
 //---------------------------------------------------------------------------//
 
@@ -90,7 +84,7 @@ struct Options
  */
 struct Converted
 {
-    using VGPlacedVolume = vecgeom::VPlacedVolume;
+    using VGPlacedVolume = detail::VGPlacedVolume;
     using VecLv = std::vector<G4LogicalVolume const*>;
     using VecPv = std::vector<G4VPhysicalVolume const*>;
     using PlacedVolumeId = unsigned int;

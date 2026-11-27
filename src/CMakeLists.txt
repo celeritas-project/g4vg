@@ -20,6 +20,7 @@ add_library(g4vg_impl OBJECT
 target_include_directories(g4vg_impl
   PRIVATE
     "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>"
+    "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>" # G4VGVecGeomFwd.hh
 )
 target_compile_features(g4vg_impl PUBLIC cxx_std_17)
 target_compile_definitions(g4vg_impl PRIVATE G4VG_DEBUG=$<BOOL:${G4VG_DEBUG}>)
@@ -71,7 +72,19 @@ cuda_rdc_target_link_libraries(g4vg
 cuda_rdc_target_include_directories(g4vg
   PUBLIC
     "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>"
+    "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>"
     "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
+)
+
+# VecGeom types of G4VG.hh, declared for this VecGeom version (since 2.3 the
+# volume classes are templates on the memory space)
+if(VecGeom_VERSION VERSION_GREATER_EQUAL 2.3)
+  set(G4VG_VECGEOM_MEMSPACE_TEMPLATES ON)
+else()
+  set(G4VG_VECGEOM_MEMSPACE_TEMPLATES OFF)
+endif()
+configure_file(G4VGVecGeomFwd.hh.in
+  "${PROJECT_BINARY_DIR}/include/G4VGVecGeomFwd.hh" @ONLY
 )
 
 # Alias the library for downstream code
@@ -92,8 +105,10 @@ install(TARGETS g4vg
   COMPONENT runtime
 )
 
-# Install the only public source header
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/G4VG.hh"
+# Install the public headers
+install(FILES
+  "${CMAKE_CURRENT_SOURCE_DIR}/G4VG.hh"
+  "${PROJECT_BINARY_DIR}/include/G4VGVecGeomFwd.hh"
   DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
   COMPONENT development
 )

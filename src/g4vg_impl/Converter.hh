@@ -9,8 +9,23 @@
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
+#include <VecGeom/base/Version.h>
 
 #include "G4VG.hh"
+
+#if VECGEOM_VERSION >= 0x020300
+// Since VecGeom 2.3 the volume classes are memory-space templates: use its
+// forward declarations
+#    include <VecGeom/volumes/VolumesFwd.h>
+#else
+namespace vecgeom
+{
+inline namespace cxx
+{
+class LogicalVolume;
+}  // namespace cxx
+}  // namespace vecgeom
+#endif
 
 namespace g4vg
 {
